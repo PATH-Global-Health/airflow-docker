@@ -21,7 +21,7 @@ default_args = {
 
 dag = DAG('hrp_case_control', default_args=default_args,
           description='Read HRP case control data from ODK Central, process and push it to DHIS2',
-          schedule_interval='0 19 * * *')
+          schedule_interval='0 19 * * *', catchup=False)
 
 var_conf = Variable.get("hrp_odk_dhis2_vars", deserialize_json=True)
 ODK_CENTRAL_ENDPOINTS = var_conf["ODK_CENTRAL_ENDPOINT"]
