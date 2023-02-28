@@ -1,3 +1,7 @@
+--TYPE
+CREATE TYPE change_status AS ENUM ('insert', 'update');
+
+-- DATA SOURCE
 CREATE TABLE IF NOT EXISTS data_source (
     id CHARACTER VARYING(50) PRIMARY KEY,
     title CHARACTER VARYING(150) NOT NULL,
@@ -6,7 +10,7 @@ CREATE TABLE IF NOT EXISTS data_source (
 );
 
 
--- Organisation Unit
+-- ORGANISATION UNIT
 CREATE TABLE IF NOT EXISTS organisationunit (
     id CHARACTER VARYING(11),
     code CHARACTER VARYING(50),
@@ -22,7 +26,7 @@ CREATE TABLE IF NOT EXISTS organisationunit (
     address CHARACTER VARYING(255),
     email CHARACTER VARYING(150),
     phonenumber CHARACTER VARYING(150),
-    changed boolean default true,
+    change change_status default 'insert',
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (id, source_id),
     CONSTRAINT fk_organisationunit_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
@@ -36,13 +40,13 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.shortname <> OLD.shortname OR 
         NEW.parentid <> OLD.parentid THEN
-		 UPDATE organisationunit SET changed = true
+		 UPDATE organisationunit SET change = 'update'
          WHERE id = NEW.id AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER organisationunit_changes_trigger
     AFTER UPDATE
@@ -67,7 +71,7 @@ CREATE TABLE IF NOT EXISTS optionset (
     name CHARACTER VARYING(230) NOT NULL,
     valuetype CHARACTER VARYING(50) NOT NULL,
     version integer,
-    changed boolean default true, 
+    change change_status default 'insert',
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (id, source_id),
     CONSTRAINT fk_optionset_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
@@ -80,13 +84,13 @@ CREATE OR REPLACE FUNCTION track_optionset_changes()
 $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
-		 UPDATE optionset SET changed = true
+		 UPDATE optionset SET change = 'update'
          WHERE id = NEW.id AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER optionset_changes_trigger
     AFTER UPDATE
@@ -103,7 +107,7 @@ CREATE TABLE IF NOT EXISTS categorycombo (
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
-    changed boolean default true,
+    change change_status default 'insert',
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (id, source_id),
     CONSTRAINT fk_categorycombo_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
@@ -116,13 +120,13 @@ CREATE OR REPLACE FUNCTION track_categorycombo_changes()
 $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
-		 UPDATE categorycombo SET changed = true
+		 UPDATE categorycombo SET change = 'update'
          WHERE id = NEW.id AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER categorycombo_changes_trigger
     AFTER UPDATE
@@ -140,7 +144,7 @@ CREATE TABLE IF NOT EXISTS  dataelementcategory (
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
     datadimension boolean,
-    changed boolean default true, 
+    change change_status default 'insert',
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (id, source_id),
     CONSTRAINT fk_dataelementcategory_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
@@ -153,13 +157,13 @@ CREATE OR REPLACE FUNCTION track_dataelementcategory_changes()
 $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.datadimension <> OLD.datadimension THEN
-		 UPDATE dataelementcategory SET changed = true
+		 UPDATE dataelementcategory SET change = 'update'
          WHERE id = NEW.id AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER dataelementcategory_changes_trigger
     AFTER UPDATE
@@ -180,7 +184,7 @@ CREATE TABLE IF NOT EXISTS dataelementcategoryoption (
     startdate date,
     enddate date,
     dataelementcategory_id CHARACTER VARYING(11),
-    changed boolean default true, 
+    change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (id, source_id),
     CONSTRAINT fk_dataelementcategoryoption_dataelementcategory FOREIGN KEY(dataelementcategory_id) REFERENCES dataelementcategory(id),
@@ -194,13 +198,13 @@ CREATE OR REPLACE FUNCTION track_dataelementcategoryoption_changes()
 $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.shortname <> OLD.shortname THEN
-		 UPDATE dataelementcategoryoption SET changed = true
+		 UPDATE dataelementcategoryoption SET change = 'update'
          WHERE id = NEW.id AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER dataelementcategoryoption_changes_trigger
     AFTER UPDATE
@@ -216,7 +220,7 @@ CREATE TRIGGER dataelementcategoryoption_changes_trigger
 CREATE TABLE IF NOT EXISTS dataelementcategory_categorycombo (
     categorycombo_id CHARACTER VARYING(11),
     dataelementcategory_id CHARACTER VARYING(11),
-    changed boolean default true, 
+    change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (categorycombo_id, dataelementcategory_id, source_id),
     CONSTRAINT fk_dataelementcategorycombo_categorycombo FOREIGN KEY(categorycombo_id) REFERENCES categorycombo(id),
@@ -231,7 +235,7 @@ CREATE TABLE IF NOT EXISTS categoryoptioncombo (
     id CHARACTER VARYING(11),
     name CHARACTER VARYING(230) NOT NULL,
     categorycombo_id CHARACTER VARYING(11),
-    changed boolean default true, 
+    change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (id, source_id),
     CONSTRAINT fk_categoryoptioncombo_categorycombo FOREIGN KEY(categorycombo_id) REFERENCES categorycombo(id),
@@ -245,13 +249,13 @@ CREATE OR REPLACE FUNCTION track_categoryoptioncombo_changes()
 $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
-		 UPDATE categoryoptioncombo SET changed = true
+		 UPDATE categoryoptioncombo SET change = 'update'
          WHERE id = NEW.id AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER categoryoptioncombo_changes_trigger
     AFTER UPDATE
@@ -275,7 +279,7 @@ CREATE TABLE IF NOT EXISTS dataelement (
     categorycomboid BIGINT NOT NULL,
     url CHARACTER VARYING(255),
     optionsetid BIGINT,
-    changed boolean default true, 
+    change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (id, source_id),
     CONSTRAINT fk_dataelement_optionset FOREIGN KEY(optionsetid) REFERENCES optionset(id),
@@ -292,13 +296,13 @@ BEGIN
 	IF NEW.name <> OLD.name OR NEW.shortname <> OLD.shortname OR 
         NEW.formname <> OLD.formname OR NEW.domaintype <> OLD.domaintype OR 
         NEW.aggregationtype <> OLD.aggregationtype OR NEW.categorycomboid <> OLD.categorycomboid THEN
-		 UPDATE dataelement SET changed = true
+		 UPDATE dataelement SET change = 'update'
          WHERE id = NEW.id AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER dataelement_changes_trigger
     AFTER UPDATE
@@ -319,7 +323,7 @@ CREATE TABLE IF NOT EXISTS datavalue (
     value CHARACTER VARYING(50000),
     followup boolean,
     deleted boolean NOT NULL,
-    changed boolean default true, 
+    change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (dataelementid, period, organisationunitid, categoryoptioncomboid, attributeoptioncomboid, source_id),
     CONSTRAINT fk_dataelement_datavalue FOREIGN KEY(dataelementid) REFERENCES dataelement(id),
@@ -336,7 +340,7 @@ CREATE OR REPLACE FUNCTION track_datavalue_changes()
 $$
 BEGIN
 	IF NEW.value <> OLD.value THEN
-		 UPDATE datavalue SET changed = true
+		 UPDATE datavalue SET change = 'update'
          WHERE dataelementid = NEW.dataelementid AND period =  NEW.period AND organisationunitid = NEW.organisationunitid AND
                 categoryoptioncomboid = NEW.categoryoptioncomboid AND attributeoptioncomboid = NEW.attributeoptioncomboid AND
                 source_id = NEW.source_id;
@@ -344,7 +348,7 @@ BEGIN
 
 	RETURN NEW;
 END;
-$$
+$$;
 
 CREATE TRIGGER datavalue_changes_trigger
     AFTER UPDATE

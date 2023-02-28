@@ -16,8 +16,9 @@ default_args = {
 }
 
 
-with DAG('HMIS_staging_etl',  default_args=default_args, description='A pipeline for reading data from HMIS/DHIS2 and storing it in a PostgreSQL staging database.', 
-    schedule_interval='0 19 * * *', catchup=False) as dag:
+with DAG('HMIS_staging_etl',  default_args=default_args, 
+         description='A pipeline for reading data from HMIS/DHIS2 and storing it in a PostgreSQL staging database.', 
+         schedule_interval='0 19 * * *', catchup=False) as dag:
 
     create_table = PostgresOperator(
         task_id='create_table',
