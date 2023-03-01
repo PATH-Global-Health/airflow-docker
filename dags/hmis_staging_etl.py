@@ -23,5 +23,5 @@ with DAG('HMIS_staging_etl',  default_args=default_args,
     create_table = PostgresOperator(
         task_id='create_table',
         postgres_conn_id='postgres',
-        sql="sql/pg_create_table"
+        sql="sql/pg_create_tables.sql"
     )

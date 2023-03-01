@@ -1,5 +1,11 @@
 --TYPE
-CREATE TYPE change_status AS ENUM ('insert', 'update');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'change_status') THEN
+        CREATE TYPE change_status AS ENUM ('insert', 'update');
+    END IF;
+END$$;
+
 
 -- DATA SOURCE
 CREATE TABLE IF NOT EXISTS data_source (
@@ -12,7 +18,7 @@ CREATE TABLE IF NOT EXISTS data_source (
 
 -- ORGANISATION UNIT
 CREATE TABLE IF NOT EXISTS organisationunit (
-    id CHARACTER VARYING(11),
+    uid CHARACTER VARYING(11),
     code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
@@ -28,7 +34,7 @@ CREATE TABLE IF NOT EXISTS organisationunit (
     phonenumber CHARACTER VARYING(150),
     change change_status default 'insert',
     source_id CHARACTER VARYING(50),
-    PRIMARY KEY (id, source_id),
+    PRIMARY KEY (uid, source_id),
     CONSTRAINT fk_organisationunit_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -48,7 +54,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER organisationunit_changes_trigger
+CREATE OR REPLACE TRIGGER organisationunit_changes_trigger
     AFTER UPDATE
     ON organisationunit
     FOR EACH ROW
@@ -64,7 +70,7 @@ CREATE TRIGGER organisationunit_changes_trigger
 
 -- OPTION SET
 CREATE TABLE IF NOT EXISTS optionset (
-    id CHARACTER VARYING(11),
+    uid CHARACTER VARYING(11),
     code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
@@ -73,7 +79,7 @@ CREATE TABLE IF NOT EXISTS optionset (
     version integer,
     change change_status default 'insert',
     source_id CHARACTER VARYING(50),
-    PRIMARY KEY (id, source_id),
+    PRIMARY KEY (uid, source_id),
     CONSTRAINT fk_optionset_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -92,7 +98,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER optionset_changes_trigger
+CREATE OR REPLACE TRIGGER optionset_changes_trigger
     AFTER UPDATE
     ON optionset
     FOR EACH ROW
@@ -102,14 +108,14 @@ CREATE TRIGGER optionset_changes_trigger
 -- CATEGORY COMBO
 -- e.g. SexAge
 CREATE TABLE IF NOT EXISTS categorycombo (
-    id CHARACTER VARYING(11) NOT NULL,
+    uid CHARACTER VARYING(11) NOT NULL,
     code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
     change change_status default 'insert',
     source_id CHARACTER VARYING(50),
-    PRIMARY KEY (id, source_id),
+    PRIMARY KEY (uid, source_id),
     CONSTRAINT fk_categorycombo_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -128,7 +134,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER categorycombo_changes_trigger
+CREATE OR REPLACE TRIGGER categorycombo_changes_trigger
     AFTER UPDATE
     ON categorycombo
     FOR EACH ROW
@@ -138,7 +144,7 @@ CREATE TRIGGER categorycombo_changes_trigger
 -- DATA ELEMENT CATEGORY
 -- Sex, Age
 CREATE TABLE IF NOT EXISTS  dataelementcategory (
-    id CHARACTER VARYING(11),
+    uid CHARACTER VARYING(11),
     code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
@@ -146,7 +152,7 @@ CREATE TABLE IF NOT EXISTS  dataelementcategory (
     datadimension boolean,
     change change_status default 'insert',
     source_id CHARACTER VARYING(50),
-    PRIMARY KEY (id, source_id),
+    PRIMARY KEY (uid, source_id),
     CONSTRAINT fk_dataelementcategory_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -165,7 +171,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER dataelementcategory_changes_trigger
+CREATE OR REPLACE TRIGGER dataelementcategory_changes_trigger
     AFTER UPDATE
     ON dataelementcategory
     FOR EACH ROW
@@ -175,7 +181,7 @@ CREATE TRIGGER dataelementcategory_changes_trigger
 -- DATA ELEMENT CATEGORY OPTION
 -- Male, Female, 0-4, 4-15, ...
 CREATE TABLE IF NOT EXISTS dataelementcategoryoption (
-    id CHARACTER VARYING(11),
+    uid CHARACTER VARYING(11),
     code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
@@ -186,8 +192,8 @@ CREATE TABLE IF NOT EXISTS dataelementcategoryoption (
     dataelementcategory_id CHARACTER VARYING(11),
     change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
-    PRIMARY KEY (id, source_id),
-    CONSTRAINT fk_dataelementcategoryoption_dataelementcategory FOREIGN KEY(dataelementcategory_id) REFERENCES dataelementcategory(id),
+    PRIMARY KEY (uid, source_id),
+    CONSTRAINT fk_dataelementcategoryoption_dataelementcategory FOREIGN KEY(dataelementcategory_id, source_id) REFERENCES dataelementcategory(uid, source_id),
     CONSTRAINT fk_dataelementcategoryoption_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -206,7 +212,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER dataelementcategoryoption_changes_trigger
+CREATE OR REPLACE TRIGGER dataelementcategoryoption_changes_trigger
     AFTER UPDATE
     ON dataelementcategoryoption
     FOR EACH ROW
@@ -223,8 +229,8 @@ CREATE TABLE IF NOT EXISTS dataelementcategory_categorycombo (
     change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (categorycombo_id, dataelementcategory_id, source_id),
-    CONSTRAINT fk_dataelementcategorycombo_categorycombo FOREIGN KEY(categorycombo_id) REFERENCES categorycombo(id),
-    CONSTRAINT fk_dataelementcategorycombo_dataelementcategory FOREIGN KEY(dataelementcategory_id) REFERENCES dataelementcategory(id),
+    CONSTRAINT fk_dataelementcategorycombo_categorycombo FOREIGN KEY(categorycombo_id, source_id) REFERENCES categorycombo(uid, source_id),
+    CONSTRAINT fk_dataelementcategorycombo_dataelementcategory FOREIGN KEY(dataelementcategory_id, source_id) REFERENCES dataelementcategory(uid, source_id),
     CONSTRAINT fk_dataelementcategory_categorycombo_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -232,13 +238,13 @@ CREATE TABLE IF NOT EXISTS dataelementcategory_categorycombo (
 -- CATEGORY OPTION COMBO
 -- Male 0-4, Male 5-15, Female 0-4, Female 5-15, ...
 CREATE TABLE IF NOT EXISTS categoryoptioncombo (
-    id CHARACTER VARYING(11),
+    uid CHARACTER VARYING(11),
     name CHARACTER VARYING(230) NOT NULL,
     categorycombo_id CHARACTER VARYING(11),
     change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
-    PRIMARY KEY (id, source_id),
-    CONSTRAINT fk_categoryoptioncombo_categorycombo FOREIGN KEY(categorycombo_id) REFERENCES categorycombo(id),
+    PRIMARY KEY (uid, source_id),
+    CONSTRAINT fk_categoryoptioncombo_categorycombo FOREIGN KEY(categorycombo_id, source_id) REFERENCES categorycombo(uid, source_id),
     CONSTRAINT fk_categoryoptioncombo_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -257,7 +263,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER categoryoptioncombo_changes_trigger
+CREATE OR REPLACE TRIGGER categoryoptioncombo_changes_trigger
     AFTER UPDATE
     ON categoryoptioncombo
     FOR EACH ROW
@@ -266,7 +272,7 @@ CREATE TRIGGER categoryoptioncombo_changes_trigger
 
 -- DATA ELEMENT
 CREATE TABLE IF NOT EXISTS dataelement (
-    id CHARACTER VARYING(11) NOT NULL,
+    uid CHARACTER VARYING(11) NOT NULL,
     code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
@@ -276,14 +282,14 @@ CREATE TABLE IF NOT EXISTS dataelement (
     valuetype CHARACTER VARYING(50) NOT NULL,
     domaintype CHARACTER VARYING(255) NOT NULL,
     aggregationtype CHARACTER VARYING (50) NOT NULL,
-    categorycomboid BIGINT NOT NULL,
+    categorycomboid CHARACTER VARYING(11) NOT NULL,
     url CHARACTER VARYING(255),
-    optionsetid BIGINT,
+    optionsetid CHARACTER VARYING(11),
     change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
-    PRIMARY KEY (id, source_id),
-    CONSTRAINT fk_dataelement_optionset FOREIGN KEY(optionsetid) REFERENCES optionset(id),
-    CONSTRAINT fk_dataelement_categorycombo FOREIGN KEY(categorycomboid) REFERENCES categorycombo(id),
+    PRIMARY KEY (uid, source_id),
+    CONSTRAINT fk_dataelement_optionset FOREIGN KEY(optionsetid, source_id) REFERENCES optionset(uid, source_id),
+    CONSTRAINT fk_dataelement_categorycombo FOREIGN KEY(categorycomboid, source_id) REFERENCES categorycombo(uid, source_id),
     CONSTRAINT fk_dataelement_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -304,7 +310,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER dataelement_changes_trigger
+CREATE OR REPLACE TRIGGER dataelement_changes_trigger
     AFTER UPDATE
     ON dataelement
     FOR EACH ROW
@@ -326,10 +332,10 @@ CREATE TABLE IF NOT EXISTS datavalue (
     change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (dataelementid, period, organisationunitid, categoryoptioncomboid, attributeoptioncomboid, source_id),
-    CONSTRAINT fk_dataelement_datavalue FOREIGN KEY(dataelementid) REFERENCES dataelement(id),
-    CONSTRAINT fk_organisationunit_datavalue FOREIGN KEY(organisationunitid) REFERENCES organisationunit(id),
-    CONSTRAINT fk_categoryoptioncombo_datavalue FOREIGN KEY(categoryoptioncomboid) REFERENCES categoryoptioncombo(id),
-    CONSTRAINT fk_categoryoptioncombo_datavalue_2 FOREIGN KEY(attributeoptioncomboid) REFERENCES categoryoptioncombo(id),
+    CONSTRAINT fk_dataelement_datavalue FOREIGN KEY(dataelementid, source_id) REFERENCES dataelement(uid, source_id),
+    CONSTRAINT fk_organisationunit_datavalue FOREIGN KEY(organisationunitid, source_id) REFERENCES organisationunit(uid, source_id),
+    CONSTRAINT fk_categoryoptioncombo_datavalue FOREIGN KEY(categoryoptioncomboid, source_id) REFERENCES categoryoptioncombo(uid, source_id),
+    CONSTRAINT fk_categoryoptioncombo_datavalue_2 FOREIGN KEY(attributeoptioncomboid, source_id) REFERENCES categoryoptioncombo(uid, source_id),
     CONSTRAINT fk_source_datavalue FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -350,7 +356,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER datavalue_changes_trigger
+CREATE OR REPLACE TRIGGER datavalue_changes_trigger
     AFTER UPDATE
     ON datavalue
     FOR EACH ROW
