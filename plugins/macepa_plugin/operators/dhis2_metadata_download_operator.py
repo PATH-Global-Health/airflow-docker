@@ -1,47 +1,47 @@
-from airflow.exceptions import AirflowException
-from airflow.operators.python import PythonOperator
-from airflow.utils.decorators import apply_defaults
-from airflow.hooks.base_hook import BaseHook
-import json
+
 import logging
+import json
+
+from airflow.models.baseoperator import BaseOperator
+from airflow.hooks.base_hook import BaseHook
+from airflow.exceptions import AirflowException
+
+from dhis2 import Api, RequestException
 
 
-class DHIS2MetadataDownloadOperator(PythonOperator):
+class DHIS2MetadataDownloadOperator(BaseOperator):
     """
     This operator allows you to download metadata from DHIS2.
-    :param payload_size: Your desired payload size
-    :type endpoints: int
     """
 
-    @apply_defaults
-    def __init__(self,
-                 endpoint=None,
-                 http_conn_id=None,
-                 *args,
-                 **kwargs):
-        super().__init__(*args, **kwargs)
+    # @apply_defaults
+    def __init__(self, endpoint=None, http_conn_id=None, fields=":all", **kwargs):
+        super().__init__(**kwargs)
 
         self.endpoint = endpoint
-        self.http_conn_id = http_conn_id
+        self.fields = fields
+
+        connection = BaseHook.get_connection(http_conn_id)
+        url = connection.host
+        username = connection.login
+        password = connection.get_password()
+
+        self._api = Api(url, username, password)
 
     def execute(self, context):
-        connection = BaseHook.get_connection(self.http_conn_id)
-        self.log.info(connection.username)
+        try:
+            response_data = self._api.get_paged(
+                self.endpoint, params={"fields": self.fields}, merge=True
+            )
+        except RequestException as e:  # Always handle exceptions
+            raise AirflowException(
+                # Prefer f-strings to concatenation / string interpolation
+                f"An error occurred while fetching DHIS2 data (URL: {e.url}, status code: {e.code})"
+            )
 
-        # self.log.info("Calling HTTPs method")#	logger.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")#        logger.log(self.data)
-        # #logging.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        # #logging.info(type(self.data))
-        # d = json.loads(self.data.replace("\'", "\""))
-        # payload = d["dataValues"]
-        # #logging.info(self.data)
-        # for i in range(0, len(payload), self.payload_size):
-        #     response = http.run(self.endpoint,
-        #                         json.dumps({"dataValues": payload[i:i + self.payload_size]}),
-        #                         self.headers,
-        #                         self.extra_options)
-        #     #logging.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        #     #logging.info(json.dumps({"dataValues": payload[i:i + self.payload_size]}))
-        #     if self.response_check:
-        #         if not self.response_check(response):
-        #             print(response)
-        #             raise AirflowException("Response check returned False.")
+        file_name = "dags/tmp/{}.json".format(self.endpoint)
+        xcom_key = "DHIS2MetadataDownloadOperator_{}".format(self.endpoint)
+        with open(file_name, 'w') as file:
+            json.dump(response_data[self.endpoint], file)
+
+            self.xcom_push(context=context, key=xcom_key, value=file_name)
