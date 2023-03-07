@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS organisationunit (
     address CHARACTER VARYING(255),
     email CHARACTER VARYING(150),
     phonenumber CHARACTER VARYING(150),
+    featuretype character varying(255),
+    coordinates text,
     change change_status default 'insert',
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (uid, source_id),
