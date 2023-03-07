@@ -15,11 +15,12 @@ class DHIS2MetadataDownloadOperator(BaseOperator):
     """
 
     # @apply_defaults
-    def __init__(self, endpoint=None, http_conn_id=None, fields=":all", **kwargs):
+    def __init__(self, endpoint=None, http_conn_id=None, fields=":all", tmp_dir="dags/tmp", **kwargs):
         super().__init__(**kwargs)
 
         self.endpoint = endpoint
         self.fields = fields
+        self.tmp_dir = tmp_dir
 
         connection = BaseHook.get_connection(http_conn_id)
         url = connection.host
@@ -39,7 +40,7 @@ class DHIS2MetadataDownloadOperator(BaseOperator):
                 f"An error occurred while fetching DHIS2 data (URL: {e.url}, status code: {e.code})"
             )
 
-        file_name = "dags/tmp/{}.json".format(self.endpoint)
+        file_name = "{}/{}.json".format(self.tmp_dir, self.endpoint)
         xcom_key = "DHIS2MetadataDownloadOperator_{}".format(self.endpoint)
         with open(file_name, 'w') as file:
             json.dump(response_data[self.endpoint], file)
