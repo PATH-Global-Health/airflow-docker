@@ -30,8 +30,9 @@ default_args = {
 
 
 def _process_organisation_units(ti):
-    ou = ti.xcom_pull(task_ids="extract_organisation_unit")
-    ou1 = ou['organisationUnits'][0]
+    file_name = ti.xcom_pull(task_ids="extract_organisation_unit")
+    organisation_units = json.load(file_name)
+
     processed_ou = json_normalize({
         'uid': ou1['id'],
         'name': ou1['displayName']
@@ -52,7 +53,7 @@ def _store_organisation_unit():
 with DAG('HMIS-DHIS2',  default_args=default_args,
          description='''A pipeline for reading data from HMIS/DHIS2 and storing it in a 
          PostgreSQL staging database, after which the data is transformed and stored in the ClickHouse.''',
-         schedule_interval='0 19 * * *', catchup=False) as dag:
+         schedule='0 19 * * *', catchup=False) as dag:
 
     create_staging_tables = PostgresOperator(
         task_id='create_staging_tables',
@@ -60,29 +61,21 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         sql="sql/pg_create_tables.sql"
     )
 
-    extract_organisation_unit = SimpleHttpOperator(
-        task_id='extract_organisation_unit',
-        http_conn_id='hmis_dhis2_api',
-        endpoint='api/organisationUnits',
-        method='GET',
-        response_filter=lambda response: json.loads(response.text),
-        log_response=True
-    )
-
     process_organisation_unit = PythonOperator(
         task_id='process_organisation_units',
         python_callable=_process_organisation_units
     )
 
-    store_organisation_unit = PythonOperator(
-        task_id='store_organisation_unit',
-        python_callable=_store_organisation_unit
-    )
+    # store_organisation_unit = PythonOperator(
+    #     task_id='store_organisation_unit',
+    #     python_callable=_store_organisation_unit
+    # )
 
-    download_metadata = DHIS2MetadataDownloadOperator(
-        task_id='download_metadata',
-        endpoint='api/organisationUnits',
+    extract_organisation_unit = DHIS2MetadataDownloadOperator(
+        task_id='extract_organisation_unit',
+        endpoint='organisationUnits',
         http_conn_id='hmis_dhis2_api',
+        fields='*'
     )
 
-    create_staging_tables >> extract_organisation_unit >> process_organisation_unit >> download_metadata
+    create_staging_tables >> extract_organisation_unit >> process_organisation_unit
