@@ -15,7 +15,7 @@ class DHIS2MetadataDownloadOperator(BaseOperator):
     """
 
     # @apply_defaults
-    def __init__(self, endpoint=None, http_conn_id=None, fields=":all", tmp_dir="dags/tmp", **kwargs):
+    def __init__(self, endpoint=None, http_conn_id=None, fields=":all", tmp_dir="dags/tmp/json", **kwargs):
         super().__init__(**kwargs)
 
         self.endpoint = endpoint

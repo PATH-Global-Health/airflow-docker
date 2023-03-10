@@ -1,10 +1,9 @@
 import airflow
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.providers.http.operators.http import SimpleHttpOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from macepa_plugin import DHIS2MetadataDownloadOperator
+from macepa_plugin import DHIS2MetadataDownloadOperator, GeneratePostgreSQLOperator
 
 import json
 from pandas import json_normalize
@@ -29,19 +28,6 @@ default_args = {
 #         for org_unit in pages['organisationUnits']:
 
 
-def _process_organisation_units(ti):
-    file_name = ti.xcom_pull(task_ids="extract_organisation_unit")
-    organisation_units = json.load(file_name)
-
-    processed_ou = json_normalize({
-        'uid': ou1['id'],
-        'name': ou1['displayName']
-    })
-
-    processed_ou.to_csv(
-        'dags/tmp/processed_organisation_units.csv', index=False, header=False)
-
-
 def _store_organisation_unit():
     hook = PostgresHook(postgres_conn_id='postgres')
     hook.copy_expert(
@@ -61,16 +47,6 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         sql="sql/pg_create_tables.sql"
     )
 
-    process_organisation_unit = PythonOperator(
-        task_id='process_organisation_units',
-        python_callable=_process_organisation_units
-    )
-
-    # store_organisation_unit = PythonOperator(
-    #     task_id='store_organisation_unit',
-    #     python_callable=_store_organisation_unit
-    # )
-
     extract_organisation_unit = DHIS2MetadataDownloadOperator(
         task_id='extract_organisation_unit',
         endpoint='organisationUnits',
@@ -78,4 +54,32 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         fields='*'
     )
 
-    create_staging_tables >> extract_organisation_unit >> process_organisation_unit
+    generate_postgres_sql_4_organisation_units = GeneratePostgreSQLOperator(
+        task_id='generate_postgres_sql_4_organisation_units',
+        table_name='organisationunit',
+        json_key_table_columns_2_map={
+            'id': 'uid',
+            'code': 'code',
+            'created': 'created',
+            'lastUpdated': 'lastupdated',
+            'name': 'name',
+            'shortName': 'shortname',
+            'parent.id': 'parentid',
+            'path': 'path',
+            'openingDate': 'openingdate',
+            'closedDate': 'closeddate',
+            'contactPerson': 'contactperson',
+            'address': 'address',
+            'email': 'email',
+            'phoneNumber': 'phonenumber',
+            'geometry.type': 'featuretype',
+            'geometry.coordinates': 'coordinates'
+        },
+        primary_keys=[
+            'uid', 'source_id'
+        ],
+        sql_filename="organisationUnits.sql",
+        json_file="dags/tmp/json/organisationUnits.json"
+    )
+
+    create_staging_tables >> extract_organisation_unit >> generate_postgres_sql_4_organisation_units
