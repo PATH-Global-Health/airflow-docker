@@ -56,7 +56,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
                     for update_column in table_columns:
                         if update_column != 'uid':
                             update.append(
-                                "{} = EXCLUDED.{}".format(update_column))
+                                "{} = EXCLUDED.{}".format(update_column, update_column))
 
                     sql.append(
                         f"INSERT INTO {self.table_name} ({','.join(table_columns)}) VALUES({','.join(values)}) ON CONFLICT({','.join(self.primary_keys)}) DO UPDATE SET {','.join(update)};")
