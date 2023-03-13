@@ -1,12 +1,8 @@
 
 import json
-import time
-import datetime
 
 from airflow.models.baseoperator import BaseOperator
 from airflow.exceptions import AirflowException
-
-from dhis2 import Api, RequestException
 
 
 class GeneratePostgreSQLOperator(BaseOperator):
@@ -15,7 +11,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
     """
 
     def cast(self, type, value):
-        if type == "int" or type == "float" or "bool":
+        if type == "int" or type == "float":
             return value
         elif type == 'timestamp' or type == 'date':
             return "TO_TIMESTAMP('{}', 'YYYY-MM-DD/THH24:MI:ss.MS')".format(value)
@@ -59,9 +55,9 @@ class GeneratePostgreSQLOperator(BaseOperator):
                     for json_key, value in json_row.items():
                         if json_key in self.json_key_table_columns_2_map.keys():
                             table_columns.append(
-                                self.json_key_table_columns_2_map['column'])
+                                self.json_key_table_columns_2_map[json_key]['column'])
                             values.append(
-                                self.cast(self.json_key_table_columns_2_map['type'], value))
+                                self.cast(self.json_key_table_columns_2_map[json_key]['type'], value))
 
                     update = []
                     for update_column in table_columns:
@@ -77,7 +73,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
             with open(file_name, 'w') as file:
                 file.write("\n".join(sql))
 
-        except RequestException as e:
+        except Exception as e:
             raise AirflowException(
                 f"An error occurred while converting json to sql with message {e}"
             )
