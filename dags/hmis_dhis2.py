@@ -47,11 +47,17 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         sql="sql/pg_create_tables.sql"
     )
 
+    populate_data_source_tables = PostgresOperator(
+        task_id='populate_data_source_tables',
+        postgres_conn_id='postgres',
+        sql="sql/pg_data_source_table.sql"
+    )
+
     extract_organisation_unit = DHIS2MetadataDownloadOperator(
         task_id='extract_organisation_unit',
         endpoint='organisationUnits',
         http_conn_id='hmis_dhis2_api',
-        fields='id,code,name'
+        fields='*'
     )
 
     change_json_2_sql_org_unit = GeneratePostgreSQLOperator(
@@ -80,7 +86,15 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
             'uid', 'source_id'
         ],
         sql_filename="organisationUnits.sql",
-        json_file="dags/tmp/json/organisationUnits.json"
+        json_file="dags/tmp/json/organisationUnits.json",
+        source={'id': 'source_id', 'url': 'https://et.dhis2.net/hrp'}
     )
 
-    create_staging_tables >> extract_organisation_unit >> change_json_2_sql_org_unit
+    import_org_units = PostgresOperator(
+        task_id='import_org_units',
+        postgres_conn_id='postgres',
+        sql="tmp/pg_sql/organisationUnits.sql"
+    )
+
+    create_staging_tables >> populate_data_source_tables >> \
+        extract_organisation_unit >> change_json_2_sql_org_unit >> import_org_units

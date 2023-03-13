@@ -1,0 +1,1 @@
+INSERT INTO data_source (id,title,url,description) VALUES(MD5('https://et.dhis2.net/hrp'), 'HMIS DHIS2', 'https://dhis.moh.gov.et', 'The Ethiopian Ministry of Health HMIS/DHIS2 instance') ON CONFLICT DO NOTHING;
