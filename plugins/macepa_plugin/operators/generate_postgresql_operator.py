@@ -17,7 +17,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
             return "TO_TIMESTAMP('{}', 'YYYY-MM-DD/THH24:MI:ss.MS')".format(value)
         return "'{}'".format(value)
 
-    def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, sql_filename: str, json_file: str, tmp_dir="dags/tmp/pg_sql", **kwargs):
+    def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, sql_filename: str, json_file: str, source: str, tmp_dir="dags/tmp/pg_sql", **kwargs):
         super().__init__(**kwargs)
 
         if table_name.strip().__len__() == 0:
@@ -42,6 +42,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
         self.primary_keys = primary_keys
         self.sql_filename = sql_filename
         self.json_file = json_file
+        self.source = source
 
     def execute(self, context):
         sql = []
@@ -59,9 +60,13 @@ class GeneratePostgreSQLOperator(BaseOperator):
                             values.append(
                                 self.cast(self.json_key_table_columns_2_map[json_key]['type'], value))
 
+                    if not self.source:
+                        table_columns.append('source_id')
+                        values.append("MD5('{}')".format(self.source))
+
                     update = []
                     for update_column in table_columns:
-                        if update_column != 'uid':
+                        if update_column not in self.primary_keys:
                             update.append(
                                 "{} = EXCLUDED.{}".format(update_column, update_column))
 
