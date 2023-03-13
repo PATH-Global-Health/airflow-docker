@@ -1,5 +1,7 @@
 
 import json
+import time
+import datetime
 
 from airflow.models.baseoperator import BaseOperator
 from airflow.exceptions import AirflowException
@@ -11,6 +13,13 @@ class GeneratePostgreSQLOperator(BaseOperator):
     """
     This operator allows you to generate Postgres sql to be imported into the staging database.
     """
+
+    def cast(self, type, value):
+        if type == "int" or type == "float" or "bool":
+            return value
+        elif type == 'timestamp' or type == 'date':
+            return "TO_TIMESTAMP('{}', 'YYYY-MM-DD/THH24:MI:ss.MS')".format(value)
+        return "'{}'".format(value)
 
     def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, sql_filename: str, json_file: str, tmp_dir="dags/tmp/pg_sql", **kwargs):
         super().__init__(**kwargs)
@@ -49,8 +58,10 @@ class GeneratePostgreSQLOperator(BaseOperator):
                     values = []
                     for json_key, value in json_row.items():
                         if json_key in self.json_key_table_columns_2_map.keys():
-                            table_columns.append(json_key)
-                            values.append(value)
+                            table_columns.append(
+                                self.json_key_table_columns_2_map['column'])
+                            values.append(
+                                self.cast(self.json_key_table_columns_2_map['type'], value))
 
                     update = []
                     for update_column in table_columns:
@@ -64,7 +75,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
             file_name = "{}/{}".format(self.tmp_dir, self.sql_filename)
 
             with open(file_name, 'w') as file:
-                json.dump("\n".join(sql), file)
+                file.write("\n".join(sql))
 
         except RequestException as e:
             raise AirflowException(

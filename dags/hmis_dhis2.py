@@ -51,29 +51,30 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         task_id='extract_organisation_unit',
         endpoint='organisationUnits',
         http_conn_id='hmis_dhis2_api',
-        fields='*'
+        fields='id,code,name'
     )
 
-    generate_postgres_sql_4_organisation_units = GeneratePostgreSQLOperator(
-        task_id='generate_postgres_sql_4_organisation_units',
+    change_json_2_sql_org_unit = GeneratePostgreSQLOperator(
+        task_id='change_json_2_sql_org_unit',
         table_name='organisationunit',
         json_key_table_columns_2_map={
-            'id': 'uid',
-            'code': 'code',
-            'created': 'created',
-            'lastUpdated': 'lastupdated',
-            'name': 'name',
-            'shortName': 'shortname',
-            'parent.id': 'parentid',
-            'path': 'path',
-            'openingDate': 'openingdate',
-            'closedDate': 'closeddate',
-            'contactPerson': 'contactperson',
-            'address': 'address',
-            'email': 'email',
-            'phoneNumber': 'phonenumber',
-            'geometry.type': 'featuretype',
-            'geometry.coordinates': 'coordinates'
+            'id': {'column': 'uid', 'type': 'str'},
+            'code': {'column': 'code', 'type': 'str'},
+            'created': {'column': 'created', 'type': 'timestamp'},
+            'lastUpdated': {'column': 'lastupdated', 'type': 'timestamp'},
+            'name': {'column': 'name', 'type': 'str'},
+            'shortName': {'column': 'shortname', 'type': 'str'},
+            'parent.id': {'column': 'parentid', 'type': 'str'},
+            'path': {'column': 'path', 'type': 'str'},
+            'leaf': {'column': 'leaf', 'type': 'bool'},
+            'openingDate': {'column': 'openingdate', 'type': 'date'},
+            'closedDate': {'column': 'closeddate', 'type': 'date'},
+            'contactPerson': {'column': 'contactperson', 'type': 'str'},
+            'address': {'column': 'address', 'type': 'str'},
+            'email': {'column': 'email', 'type': 'str'},
+            'phoneNumber': {'column': 'phonenumber', 'type': 'str'},
+            'geometry.type': {'column': 'featuretype', 'type': 'str'},
+            'geometry.coordinates': {'column': 'coordinates', 'type': 'str'}
         },
         primary_keys=[
             'uid', 'source_id'
@@ -82,4 +83,4 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         json_file="dags/tmp/json/organisationUnits.json"
     )
 
-    create_staging_tables >> extract_organisation_unit >> generate_postgres_sql_4_organisation_units
+    create_staging_tables >> extract_organisation_unit >> change_json_2_sql_org_unit
