@@ -17,7 +17,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
             return "TO_TIMESTAMP('{}', 'YYYY-MM-DD/THH24:MI:ss.MS')".format(value)
         return "'{}'".format(value)
 
-    def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, sql_filename: str, json_file: str, source: str, tmp_dir="dags/tmp/pg_sql", **kwargs):
+    def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, sql_filename: str, json_file: str, source: dict, tmp_dir="dags/tmp/pg_sql", **kwargs):
         super().__init__(**kwargs)
 
         if table_name.strip().__len__() == 0:
@@ -60,9 +60,9 @@ class GeneratePostgreSQLOperator(BaseOperator):
                             values.append(
                                 self.cast(self.json_key_table_columns_2_map[json_key]['type'], value))
 
-                    if not self.source:
-                        table_columns.append('source_id')
-                        values.append("MD5('{}')".format(self.source))
+                    if self.source:
+                        table_columns.append(self.source['id'])
+                        values.append("MD5('{}')".format(self.source['url']))
 
                     update = []
                     for update_column in table_columns:
