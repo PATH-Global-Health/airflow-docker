@@ -7,6 +7,7 @@ from airflow.hooks.base_hook import BaseHook
 from datetime import timedelta
 
 from hmis_groups.process_org_units_metadata import process_org_units_metadata
+from hmis_groups.process_categories_metadata import process_categories_metadata
 
 default_args = {
     'owner': 'airflow',
@@ -53,6 +54,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
     )
 
     process_hmis_org_units_metadata = process_org_units_metadata()
+    process_hmis_categories_metadata = process_categories_metadata()
 
     create_staging_tables >> populate_data_source_tables >> set_data_source >> \
-        process_hmis_org_units_metadata
+        [process_hmis_org_units_metadata, process_hmis_categories_metadata]
