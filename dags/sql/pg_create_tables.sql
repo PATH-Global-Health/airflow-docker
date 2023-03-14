@@ -50,7 +50,7 @@ BEGIN
 	IF NEW.name <> OLD.name OR NEW.shortname <> OLD.shortname OR 
         NEW.parentid <> OLD.parentid THEN
 		 UPDATE organisationunit SET change = 'update'
-         WHERE id = NEW.id AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
@@ -94,7 +94,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
 		 UPDATE optionset SET change = 'update'
-         WHERE id = NEW.id AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
@@ -130,7 +130,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
 		 UPDATE categorycombo SET change = 'update'
-         WHERE id = NEW.id AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
@@ -167,7 +167,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.datadimension <> OLD.datadimension THEN
 		 UPDATE dataelementcategory SET change = 'update'
-         WHERE id = NEW.id AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
@@ -208,7 +208,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.shortname <> OLD.shortname THEN
 		 UPDATE dataelementcategoryoption SET change = 'update'
-         WHERE id = NEW.id AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
@@ -259,7 +259,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
 		 UPDATE categoryoptioncombo SET change = 'update'
-         WHERE id = NEW.id AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
@@ -306,7 +306,7 @@ BEGIN
         NEW.formname <> OLD.formname OR NEW.domaintype <> OLD.domaintype OR 
         NEW.aggregationtype <> OLD.aggregationtype OR NEW.categorycomboid <> OLD.categorycomboid THEN
 		 UPDATE dataelement SET change = 'update'
-         WHERE id = NEW.id AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
 	RETURN NEW;
