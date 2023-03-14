@@ -17,7 +17,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
             return "TO_TIMESTAMP('{}', 'YYYY-MM-DD/THH24:MI:ss.MS')".format(value)
         return "'{}'".format(value)
 
-    def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, sql_filename: str, json_file: str, source: dict, tmp_dir="dags/tmp/pg_sql", **kwargs):
+    def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, sql_filename: str, json_file: str, tmp_dir="dags/tmp/pg_sql", **kwargs):
         super().__init__(**kwargs)
 
         if table_name.strip().__len__() == 0:
@@ -42,39 +42,50 @@ class GeneratePostgreSQLOperator(BaseOperator):
         self.primary_keys = primary_keys
         self.sql_filename = sql_filename
         self.json_file = json_file
-        self.source = source
 
     def execute(self, context):
+        # extract the data source we set from xcom
+        source = self.xcom_pull(context=context, key='get_hmis_data_source')
         sql = []
         try:
             with open(self.json_file) as f:
                 json_rows = json.load(f)
                 # generate sql
+                # for every json row in the metadata dump
                 for json_row in json_rows:
                     table_columns = []
                     values = []
+                    # extract the key value pair like the uid, code, name ...
                     for json_key, value in json_row.items():
+                        # check if the extracted key exists in the json key to table column map variable
                         if json_key in self.json_key_table_columns_2_map.keys():
+                            # if it exists, get the column name equivalent of the key from
+                            # json_key_table_columns_2_map dictionary and store it in table_columns list
                             table_columns.append(
                                 self.json_key_table_columns_2_map[json_key]['column'])
+                            # type cast the value and store it in the values
                             values.append(
                                 self.cast(self.json_key_table_columns_2_map[json_key]['type'], value))
 
-                    if self.source:
-                        table_columns.append(self.source['id'])
-                        values.append("MD5('{}')".format(self.source['url']))
+                    # set the data source foreign key
+                    if source:
+                        table_columns.append(source['id'])
+                        values.append("MD5('{}')".format(source['url']))
 
+                    # Since we are using the upsert sql, if the insert fails, prepare the columns to be updated
                     update = []
                     for update_column in table_columns:
+                        # we update all columns except the primary keys
                         if update_column not in self.primary_keys:
                             update.append(
                                 "{} = EXCLUDED.{}".format(update_column, update_column))
 
+                    # finally merge the columns using comma that we are using in the insert and update query and append it in the sql list
                     sql.append(
                         f"INSERT INTO {self.table_name} ({','.join(table_columns)}) VALUES({','.join(values)}) ON CONFLICT({','.join(self.primary_keys)}) DO UPDATE SET {','.join(update)};")
 
+            # dump the sql list in a file
             file_name = "{}/{}".format(self.tmp_dir, self.sql_filename)
-
             with open(file_name, 'w') as file:
                 file.write("\n".join(sql))
 

@@ -2,7 +2,7 @@ import airflow
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python import PythonOperator
-from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.hooks.base_hook import BaseHook
 from macepa_plugin import DHIS2MetadataDownloadOperator, GeneratePostgreSQLOperator
 
 import json
@@ -23,17 +23,11 @@ default_args = {
 # ti - task instance
 
 
-# def extract_organisation_unit():
-#     for pages in api.get_paged('organisationUnits', page_size=100, params={'fields': 'id,displayName,parent'}):
-#         for org_unit in pages['organisationUnits']:
-
-
-def _store_organisation_unit():
-    hook = PostgresHook(postgres_conn_id='postgres')
-    hook.copy_expert(
-        sql="COPY organisationunit FROM stdin WITH DELIMITER as ','",
-        filename='dags/tmp/processed_organisation_units.csv'
-    )
+def _set_data_source(ti, http_conn_id):
+    connection = BaseHook.get_connection(http_conn_id)
+    url = connection.host
+    ti.xcom_push(key="get_hmis_data_source", value={
+                 'id': 'source_id', 'url': url})
 
 
 with DAG('HMIS-DHIS2',  default_args=default_args,
@@ -51,6 +45,12 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         task_id='populate_data_source_tables',
         postgres_conn_id='postgres',
         sql="sql/pg_data_source_table.sql"
+    )
+
+    set_data_source = PythonOperator(
+        task_id='set_data_source',
+        python_callable=_set_data_source,
+        op_kwargs={"http_conn_id": 'hmis_dhis2_api'},
     )
 
     extract_organisation_unit = DHIS2MetadataDownloadOperator(
@@ -86,8 +86,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
             'uid', 'source_id'
         ],
         sql_filename="organisationUnits.sql",
-        json_file="dags/tmp/json/organisationUnits.json",
-        source={'id': 'source_id', 'url': 'https://et.dhis2.net/hrp'}
+        json_file="dags/tmp/json/organisationUnits.json"
     )
 
     import_org_units = PostgresOperator(
@@ -96,5 +95,5 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         sql="tmp/pg_sql/organisationUnits.sql"
     )
 
-    create_staging_tables >> populate_data_source_tables >> \
+    create_staging_tables >> populate_data_source_tables >> set_data_source >> \
         extract_organisation_unit >> change_json_2_sql_org_unit >> import_org_units
