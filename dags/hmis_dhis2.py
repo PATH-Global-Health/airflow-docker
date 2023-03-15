@@ -9,6 +9,7 @@ from datetime import timedelta
 from hmis_groups.process_org_units_metadata import process_org_units_metadata
 from hmis_groups.process_categories_metadata import process_categories_metadata
 from hmis_groups.process_category_combos_metadata import process_category_combos_metadata
+from hmis_groups.process_category_options_metadata import process_category_options_metadata
 
 default_args = {
     'owner': 'airflow',
@@ -60,11 +61,21 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         sql="tmp/pg_sql/category-CategoryCombos.sql"
     )
 
+    import_category_category_options = PostgresOperator(
+        task_id='import_category_category_options',
+        postgres_conn_id='postgres',
+        sql="tmp/pg_sql/category-CategoryOptions.sql"
+    )
+
     process_hmis_org_units_metadata = process_org_units_metadata()
     process_hmis_categories_metadata = process_categories_metadata()
-    process_category_combos_metadata_metadata = process_category_combos_metadata()
+    process_hmis_category_combos_metadata = process_category_combos_metadata()
+    process_hmis_category_options_metadata = process_category_options_metadata()
 
     create_staging_tables >> populate_data_source_tables >> set_data_source >> \
-        [process_hmis_org_units_metadata,
-         process_hmis_categories_metadata,
-         process_category_combos_metadata_metadata] >> import_category_category_combos
+        [
+            process_hmis_org_units_metadata,
+            process_hmis_categories_metadata,
+            process_hmis_category_combos_metadata,
+            process_hmis_category_options_metadata
+        ] >> import_category_category_combos >> import_category_category_options

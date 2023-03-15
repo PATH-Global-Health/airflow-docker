@@ -53,13 +53,7 @@ def process_category_combos_metadata():
             json_file="dags/tmp/json/categoryCombos.json"
         )
 
-        import_category_category_combos = PostgresOperator(
-            task_id='import_category_category_combos',
-            postgres_conn_id='postgres',
-            sql="tmp/pg_sql/category-CategoryCombos.sql"
-        )
-
         extract_category_combos >> [change_json_2_sql_category_combos, change_json_2_sql_category_category_combos] >> \
-            import_category_combos >> import_category_category_combos
+            import_category_combos
 
     return group

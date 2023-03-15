@@ -186,14 +186,10 @@ CREATE TABLE IF NOT EXISTS dataelementcategoryoption (
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
-    shortname CHARACTER VARYING(50) NOT NULL,
-    startdate date,
-    enddate date,
-    dataelementcategory_id CHARACTER VARYING(11),
+    shortname CHARACTER VARYING(50),
     change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
     PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_dataelementcategoryoption_dataelementcategory FOREIGN KEY(dataelementcategory_id, source_id) REFERENCES dataelementcategory(uid, source_id),
     CONSTRAINT fk_dataelementcategoryoption_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
 );
 
@@ -218,6 +214,21 @@ CREATE OR REPLACE TRIGGER dataelementcategoryoption_changes_trigger
     FOR EACH ROW
     EXECUTE PROCEDURE track_dataelementcategoryoption_changes();
 
+-- DATA ELEMENT CATEGORY - CATEGORY OPTION
+-- Many to Many between dataelementcategory and dataelementcategoryoption
+-- Sex => M
+-- Sex => F
+-- Age => 0-4
+CREATE TABLE IF NOT EXISTS dataelementcategory_categoryoption (
+    category_id CHARACTER VARYING(11),
+    categoryoption_id CHARACTER VARYING(11),
+    change change_status default 'insert', 
+    source_id CHARACTER VARYING(50),
+    PRIMARY KEY (category_id, categoryoption_id, source_id),
+    CONSTRAINT fk_dataelementcategory_categoryoption_dataelementcategory FOREIGN KEY(category_id, source_id) REFERENCES dataelementcategory(uid, source_id),
+    CONSTRAINT fk_dataelementcategory_categoryoption_dataelementcategoryoption FOREIGN KEY(categoryoption_id, source_id) REFERENCES dataelementcategoryoption(uid, source_id),
+    CONSTRAINT fk_dataelementcategory_categoryoption_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+);
 
 -- DATA ELEMENT CATEGORY - CATEGORY COMBO
 -- Many to Many between categorycombo and dataelementcategory
