@@ -2,7 +2,7 @@
 from airflow.utils.task_group import TaskGroup
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 
-from macepa_plugin import DHIS2MetadataDownloadOperator, GeneratePostgreSQLOperator
+from macepa_plugin import DHIS2MetadataDownloadOperator, GeneratePostgreSQLOperator, GeneratePostgreSQLMNOperator
 
 
 def process_category_combos_metadata():
@@ -36,6 +36,30 @@ def process_category_combos_metadata():
             sql="tmp/pg_sql/categoryCombos.sql"
         )
 
-        extract_category_combos >> change_json_2_sql_category_combos >> import_category_combos
+        change_json_2_sql_category_category_combos = GeneratePostgreSQLMNOperator(
+            task_id='change_json_2_sql_category_category_combos',
+            table_name='dataelementcategory_categorycombo',
+            json_key_table_columns_2_map={
+                'id': {'column': 'categorycombo_id', 'type': 'str'},
+            },
+            target_list_key_for_mn='categories',
+            mn_json_key_table_columns_2_map={
+                'id': {'column': 'dataelementcategory_id', 'type': 'str'},
+            },
+            primary_keys=[
+                'categorycombo_id', 'dataelementcategory_id', 'source_id'
+            ],
+            sql_filename="category-CategoryCombos.sql",
+            json_file="dags/tmp/json/categoryCombos.json"
+        )
+
+        import_category_category_combos = PostgresOperator(
+            task_id='import_category_category_combos',
+            postgres_conn_id='postgres',
+            sql="tmp/pg_sql/category-CategoryCombos.sql"
+        )
+
+        extract_category_combos >> [change_json_2_sql_category_combos, change_json_2_sql_category_category_combos] >> \
+            import_category_combos >> import_category_category_combos
 
     return group

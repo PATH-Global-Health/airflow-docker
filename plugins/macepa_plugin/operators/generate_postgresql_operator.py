@@ -80,9 +80,14 @@ class GeneratePostgreSQLOperator(BaseOperator):
                             update.append(
                                 "{} = EXCLUDED.{}".format(update_column, update_column))
 
+                    # if all columns are primary key, skip the update sql
+                    update_columns = ""
+                    if update.__len__() > 0:
+                        update_columns = f" ON CONFLICT({','.join(self.primary_keys)}) DO UPDATE SET {','.join(update)}"
+
                     # finally merge the columns using comma that we are using in the insert and update query and append it in the sql list
                     sql.append(
-                        f"INSERT INTO {self.table_name} ({','.join(table_columns)}) VALUES({','.join(values)}) ON CONFLICT({','.join(self.primary_keys)}) DO UPDATE SET {','.join(update)};")
+                        f"INSERT INTO {self.table_name} ({','.join(table_columns)}) VALUES({','.join(values)}){update_columns};")
 
             # dump the sql list in a file
             file_name = "{}/{}".format(self.tmp_dir, self.sql_filename)

@@ -122,7 +122,7 @@ class GeneratePostgreSQLMNOperator(BaseOperator):
                             # if all columns are primary key, skip the update sql
                             update_columns = ""
                             if update.__len__() > 0:
-                                update_columns = f" DO UPDATE SET {','.join(update)}"
+                                update_columns = f" ON CONFLICT({','.join(self.primary_keys)}) DO UPDATE SET {','.join(update)}"
 
                             # finally merge the columns using comma that we are using in the insert and update query and append it in the sql list
                             merged_table_columns = [
@@ -130,7 +130,7 @@ class GeneratePostgreSQLMNOperator(BaseOperator):
                             merged_values = [*values, *mn_values]
 
                             sql.append(
-                                f"INSERT INTO {self.table_name} ({','.join(merged_table_columns)}) VALUES({','.join(merged_values)}) ON CONFLICT({','.join(self.primary_keys)}){update_columns};")
+                                f"INSERT INTO {self.table_name} ({','.join(merged_table_columns)}) VALUES({','.join(merged_values)}){update_columns};")
 
             # dump the sql list in a file
             file_name = "{}/{}".format(self.tmp_dir, self.sql_filename)
