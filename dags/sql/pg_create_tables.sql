@@ -112,7 +112,6 @@ CREATE OR REPLACE TRIGGER optionset_changes_trigger
 -- e.g. SexAge
 CREATE TABLE IF NOT EXISTS categorycombo (
     uid CHARACTER VARYING(11) NOT NULL,
-    code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
@@ -148,7 +147,6 @@ CREATE OR REPLACE TRIGGER categorycombo_changes_trigger
 -- Sex, Age
 CREATE TABLE IF NOT EXISTS  dataelementcategory (
     uid CHARACTER VARYING(11),
-    code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
@@ -185,7 +183,6 @@ CREATE OR REPLACE TRIGGER dataelementcategory_changes_trigger
 -- Male, Female, 0-4, 4-15, ...
 CREATE TABLE IF NOT EXISTS dataelementcategoryoption (
     uid CHARACTER VARYING(11),
-    code CHARACTER VARYING(50),
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
