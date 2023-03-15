@@ -54,10 +54,17 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         op_kwargs={"http_conn_id": 'hmis_dhis2_api'},
     )
 
+    import_category_category_combos = PostgresOperator(
+        task_id='import_category_category_combos',
+        postgres_conn_id='postgres',
+        sql="tmp/pg_sql/category-CategoryCombos.sql"
+    )
+
     process_hmis_org_units_metadata = process_org_units_metadata()
     process_hmis_categories_metadata = process_categories_metadata()
     process_category_combos_metadata_metadata = process_category_combos_metadata()
 
     create_staging_tables >> populate_data_source_tables >> set_data_source >> \
-        [process_hmis_org_units_metadata, process_hmis_categories_metadata,
-            process_category_combos_metadata_metadata]
+        [process_hmis_org_units_metadata,
+         process_hmis_categories_metadata,
+         process_category_combos_metadata_metadata] >> import_category_category_combos
