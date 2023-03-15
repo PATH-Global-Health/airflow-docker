@@ -106,23 +106,16 @@ class GeneratePostgreSQLMNOperator(BaseOperator):
 
                             # Since we are using the upsert sql, if the insert fails, prepare the columns to be updated
                             update = []
-                            for update_column in table_columns:
-                                # we update all columns except the primary keys
-                                if update_column not in self.primary_keys:
-                                    update.append(
-                                        "{} = EXCLUDED.{}".format(update_column, update_column))
-
-                            # for the many to many relationship
-                            for update_column in table_mn_columns:
+                            for update_column in [*table_columns, *table_mn_columns]:
                                 # we update all columns except the primary keys
                                 if update_column not in self.primary_keys:
                                     update.append(
                                         "{} = EXCLUDED.{}".format(update_column, update_column))
 
                             # if all columns are primary key, skip the update sql
-                            update_columns = ""
+                            update_columns = "DO NOTHING"
                             if update.__len__() > 0:
-                                update_columns = f" ON CONFLICT({','.join(self.primary_keys)}) DO UPDATE SET {','.join(update)}"
+                                update_columns = f"DO UPDATE SET {','.join(update)}"
 
                             # finally merge the columns using comma that we are using in the insert and update query and append it in the sql list
                             merged_table_columns = [
@@ -130,7 +123,7 @@ class GeneratePostgreSQLMNOperator(BaseOperator):
                             merged_values = [*values, *mn_values]
 
                             sql.append(
-                                f"INSERT INTO {self.table_name} ({','.join(merged_table_columns)}) VALUES({','.join(merged_values)}){update_columns};")
+                                f"INSERT INTO {self.table_name} ({','.join(merged_table_columns)}) VALUES({','.join(merged_values)}) ON CONFLICT({','.join(self.primary_keys)}) {update_columns};")
 
             # dump the sql list in a file
             file_name = "{}/{}".format(self.tmp_dir, self.sql_filename)
