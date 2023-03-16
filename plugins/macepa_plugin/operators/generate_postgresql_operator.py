@@ -69,7 +69,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
                                         values.append(
                                             self.cast(self.json_key_table_columns_2_map[json_key]['nestedColumns'][nested_key]['type'], value[nested_key]))
                             else:
-                                # if it exists, get the column name equivalent of the key from
+                                # if it is not nested column, get the column name equivalent of the key from
                                 # json_key_table_columns_2_map dictionary and store it in table_columns list
                                 table_columns.append(
                                     self.json_key_table_columns_2_map[json_key]['column'])
