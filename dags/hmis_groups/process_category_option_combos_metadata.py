@@ -16,13 +16,15 @@ def process_category_option_combos_metadata():
 
         change_json_2_sql_category_option_combos = GeneratePostgreSQLOperator(
             task_id='change_json_2_sql_category_option_combos',
-            table_name='organisationunit',
+            table_name='categoryoptioncombo',
             json_key_table_columns_2_map={
                 'id': {'column': 'uid', 'type': 'str'},
                 'created': {'column': 'created', 'type': 'timestamp'},
                 'lastUpdated': {'column': 'lastupdated', 'type': 'timestamp'},
                 'name': {'column': 'name', 'type': 'str'},
-                'categoryCombo.id': {'column': 'categorycombo_id', 'type': 'str'}
+                'categoryCombo': {'nestedColumns': {
+                    'id': {'column': 'categorycombo_id', 'type': 'str'}
+                }, }
             },
             primary_keys=[
                 'uid', 'source_id'

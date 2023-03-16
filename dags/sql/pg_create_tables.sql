@@ -251,6 +251,7 @@ CREATE TABLE IF NOT EXISTS dataelementcategory_categorycombo (
 CREATE TABLE IF NOT EXISTS categoryoptioncombo (
     uid CHARACTER VARYING(11),
     name CHARACTER VARYING(230) NOT NULL,
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     categorycombo_id CHARACTER VARYING(11),
     change change_status default 'insert', 
