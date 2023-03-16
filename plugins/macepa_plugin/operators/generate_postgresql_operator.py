@@ -59,13 +59,23 @@ class GeneratePostgreSQLOperator(BaseOperator):
                     for json_key, value in json_row.items():
                         # check if the extracted key exists in the json key to table column map variable
                         if json_key in self.json_key_table_columns_2_map.keys():
-                            # if it exists, get the column name equivalent of the key from
-                            # json_key_table_columns_2_map dictionary and store it in table_columns list
-                            table_columns.append(
-                                self.json_key_table_columns_2_map[json_key]['column'])
-                            # type cast the value and store it in the values
-                            values.append(
-                                self.cast(self.json_key_table_columns_2_map[json_key]['type'], value))
+                            # check if the json_key has a nested column or not e.g. 'categoryCombo': {'id': 'u1uT2mTdt6Q'}}..."
+                            if 'nestedColumns' in self.json_key_table_columns_2_map[json_key]:
+                                for nested_key, nested_value in self.json_key_table_columns_2_map[json_key]['nestedColumns'].items():
+                                    if nested_key in value:
+                                        table_columns.append(
+                                            self.json_key_table_columns_2_map[json_key]['nestedColumns'][nested_key]['column'])
+                                        # extract the nested value from value and type cast it and store it in the values
+                                        values.append(
+                                            self.cast(self.json_key_table_columns_2_map[json_key]['nestedColumns'][nested_key]['type'], value[nested_key]))
+                            else:
+                                # if it exists, get the column name equivalent of the key from
+                                # json_key_table_columns_2_map dictionary and store it in table_columns list
+                                table_columns.append(
+                                    self.json_key_table_columns_2_map[json_key]['column'])
+                                # type cast the value and store it in the values
+                                values.append(
+                                    self.cast(self.json_key_table_columns_2_map[json_key]['type'], value))
 
                     # set the data source foreign key
                     if source:
