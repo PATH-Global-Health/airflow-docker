@@ -11,6 +11,7 @@ from hmis_groups.process_categories_metadata import process_categories_metadata
 from hmis_groups.process_category_combos_metadata import process_category_combos_metadata
 from hmis_groups.process_category_options_metadata import process_category_options_metadata
 from hmis_groups.process_category_option_combos_metadata import process_category_option_combos_metadata
+from hmis_groups.process_data_elements_metadata import process_data_elements_metadata
 
 default_args = {
     'owner': 'airflow',
@@ -73,6 +74,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
     process_hmis_category_combos_metadata = process_category_combos_metadata()
     process_hmis_category_options_metadata = process_category_options_metadata()
     process_hmis_category_option_combos_metadata = process_category_option_combos_metadata()
+    process_hmis_data_elements_metadata = process_data_elements_metadata()
 
     create_staging_tables >> populate_data_source_tables >> set_data_source >> \
         [
@@ -81,4 +83,5 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
             process_hmis_category_combos_metadata,
             process_hmis_category_options_metadata
         ] >> import_category_category_combos >> import_category_category_options >> \
-        process_hmis_category_option_combos_metadata
+        [process_hmis_category_option_combos_metadata,
+            process_hmis_data_elements_metadata]
