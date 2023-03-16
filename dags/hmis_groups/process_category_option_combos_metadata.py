@@ -31,8 +31,8 @@ def process_category_option_combos_metadata():
             primary_keys=[
                 'uid', 'source_id'
             ],
-            sql_filename="categoryOptionCombos.sql",
-            json_file="dags/tmp/json/categoryOptionCombos.json"
+            output_sql_filename="categoryOptionCombos.sql",
+            input_json_file="dags/tmp/json/categoryOptionCombos.json"
         )
 
         import_category_option_combos = PostgresOperator(

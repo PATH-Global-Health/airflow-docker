@@ -17,7 +17,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
             return "TO_TIMESTAMP('{}', 'YYYY-MM-DD/THH24:MI:ss.MS')".format(value)
         return "'{}'".format(value)
 
-    def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, sql_filename: str, json_file: str, tmp_dir="dags/tmp/pg_sql", **kwargs):
+    def __init__(self, table_name: str, json_key_table_columns_2_map: dict, primary_keys: list, output_sql_filename: str, input_json_file: str, tmp_dir="dags/tmp/pg_sql", **kwargs):
         super().__init__(**kwargs)
 
         if table_name.strip().__len__() == 0:
@@ -30,25 +30,25 @@ class GeneratePostgreSQLOperator(BaseOperator):
         if not primary_keys:
             raise AirflowException('No valid primary keys supplied.')
 
-        if not sql_filename:
+        if not output_sql_filename:
             raise AirflowException('No valid sql file name supplied.')
 
-        if not json_file:
-            raise AirflowException('No valid json_file supplied.')
+        if not input_json_file:
+            raise AirflowException('No valid input_json_file supplied.')
 
         self.tmp_dir = tmp_dir
         self.table_name = table_name
         self.json_key_table_columns_2_map = json_key_table_columns_2_map
         self.primary_keys = primary_keys
-        self.sql_filename = sql_filename
-        self.json_file = json_file
+        self.output_sql_filename = output_sql_filename
+        self.input_json_file = input_json_file
 
     def execute(self, context):
         # extract the data source we set from xcom
         source = self.xcom_pull(context=context, key='get_hmis_data_source')
         sql = []
         try:
-            with open(self.json_file) as f:
+            with open(self.input_json_file) as f:
                 json_rows = json.load(f)
                 # generate sql
                 # for every json row in the metadata dump
@@ -100,7 +100,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
                         f"INSERT INTO {self.table_name} ({','.join(table_columns)}) VALUES({','.join(values)}) ON CONFLICT({','.join(self.primary_keys)}) {update_columns};")
 
             # dump the sql list in a file
-            file_name = "{}/{}".format(self.tmp_dir, self.sql_filename)
+            file_name = "{}/{}".format(self.tmp_dir, self.output_sql_filename)
             with open(file_name, 'w') as file:
                 file.write("\n".join(sql))
 

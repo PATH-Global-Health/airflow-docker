@@ -27,8 +27,8 @@ def process_category_options_metadata():
             primary_keys=[
                 'uid', 'source_id'
             ],
-            sql_filename="categoryOptions.sql",
-            json_file="dags/tmp/json/categoryOptions.json"
+            output_sql_filename="categoryOptions.sql",
+            input_json_file="dags/tmp/json/categoryOptions.json"
         )
 
         change_json_2_sql_category_category_options = GeneratePostgreSQLMNOperator(
@@ -44,8 +44,8 @@ def process_category_options_metadata():
             primary_keys=[
                 'category_id', 'categoryoption_id', 'source_id'
             ],
-            sql_filename="category-CategoryOptions.sql",
-            json_file="dags/tmp/json/categoryOptions.json"
+            output_sql_filename="category-CategoryOptions.sql",
+            input_json_file="dags/tmp/json/categoryOptions.json"
         )
 
         import_category_options = PostgresOperator(

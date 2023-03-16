@@ -26,8 +26,8 @@ def process_category_combos_metadata():
             primary_keys=[
                 'uid', 'source_id'
             ],
-            sql_filename="categoryCombos.sql",
-            json_file="dags/tmp/json/categoryCombos.json"
+            output_sql_filename="categoryCombos.sql",
+            input_json_file="dags/tmp/json/categoryCombos.json"
         )
 
         import_category_combos = PostgresOperator(
@@ -49,8 +49,8 @@ def process_category_combos_metadata():
             primary_keys=[
                 'categorycombo_id', 'dataelementcategory_id', 'source_id'
             ],
-            sql_filename="category-CategoryCombos.sql",
-            json_file="dags/tmp/json/categoryCombos.json"
+            output_sql_filename="category-CategoryCombos.sql",
+            input_json_file="dags/tmp/json/categoryCombos.json"
         )
 
         extract_category_combos >> [change_json_2_sql_category_combos, change_json_2_sql_category_category_combos] >> \

@@ -43,8 +43,8 @@ def process_org_units_metadata():
             primary_keys=[
                 'uid', 'source_id'
             ],
-            sql_filename="organisationUnits.sql",
-            json_file="dags/tmp/json/organisationUnits.json"
+            output_sql_filename="organisationUnits.sql",
+            input_json_file="dags/tmp/json/organisationUnits.json"
         )
 
         import_org_units = PostgresOperator(

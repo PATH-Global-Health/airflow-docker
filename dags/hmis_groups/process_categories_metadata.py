@@ -27,8 +27,8 @@ def process_categories_metadata():
             primary_keys=[
                 'uid', 'source_id'
             ],
-            sql_filename="categories.sql",
-            json_file="dags/tmp/json/categories.json"
+            output_sql_filename="categories.sql",
+            input_json_file="dags/tmp/json/categories.json"
         )
 
         import_categories = PostgresOperator(
