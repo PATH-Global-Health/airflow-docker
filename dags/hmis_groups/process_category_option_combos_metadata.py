@@ -22,9 +22,11 @@ def process_category_option_combos_metadata():
                 'created': {'column': 'created', 'type': 'timestamp'},
                 'lastUpdated': {'column': 'lastupdated', 'type': 'timestamp'},
                 'name': {'column': 'name', 'type': 'str'},
-                'categoryCombo': {'nestedColumns': {
-                    'id': {'column': 'categorycombo_id', 'type': 'str'}
-                }, }
+                'categoryCombo': {
+                    'nestedColumns': {
+                        'id': {'column': 'categorycombo_id', 'type': 'str'}
+                    },
+                }
             },
             primary_keys=[
                 'uid', 'source_id'
