@@ -33,8 +33,12 @@ def process_org_units_metadata():
                 'address': {'column': 'address', 'type': 'str'},
                 'email': {'column': 'email', 'type': 'str'},
                 'phoneNumber': {'column': 'phonenumber', 'type': 'str'},
-                'geometry.type': {'column': 'featuretype', 'type': 'str'},
-                'geometry.coordinates': {'column': 'coordinates', 'type': 'str'}
+                'geometry': {
+                    'nestedColumns': {
+                        'type': {'column': 'featuretype', 'type': 'str'},
+                        'coordinates': {'column': 'coordinates', 'type': 'str'}
+                    },
+                }
             },
             primary_keys=[
                 'uid', 'source_id'
