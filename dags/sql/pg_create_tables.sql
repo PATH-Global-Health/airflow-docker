@@ -330,6 +330,58 @@ CREATE OR REPLACE TRIGGER dataelement_changes_trigger
     EXECUTE PROCEDURE track_dataelement_changes();
 
 
+-- DATA ELEMENT GROUP
+CREATE TABLE IF NOT EXISTS dataelementgroup (
+    uid CHARACTER VARYING(11) NOT NULL,
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    name CHARACTER VARYING(230) NOT NULL,
+    formname CHARACTER VARYING(230),
+    aggregationtype CHARACTER VARYING (50) NOT NULL,
+    change change_status default 'insert', 
+    source_id CHARACTER VARYING(50),
+    PRIMARY KEY (uid, source_id),
+    CONSTRAINT fk_dataelementgroup_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+);
+
+CREATE OR REPLACE FUNCTION track_dataelementgroup_changes()
+    RETURNS TRIGGER 
+    LANGUAGE PLPGSQL
+    AS
+$$
+BEGIN
+	IF NEW.name <> OLD.name OR NEW.formname <> OLD.formname OR 
+        NEW.aggregationtype <> OLD.aggregationtype THEN
+		 UPDATE dataelementgroup SET change = 'update'
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+	END IF;
+
+	RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER dataelementgroup_changes_trigger
+    AFTER UPDATE
+    ON dataelementgroup
+    FOR EACH ROW
+    EXECUTE PROCEDURE track_dataelementgroup_changes();
+
+
+-- DATA ELEMENT - DATA ELEMENT GROUP
+-- Many to Many between dataelement and dataelementgroup
+-- Malaria => Total Pf
+-- Malaria => Total pv
+CREATE TABLE IF NOT EXISTS dataelement_dataelementgroup (
+    dataelement_id CHARACTER VARYING(11),
+    group_id CHARACTER VARYING(11),
+    change change_status default 'insert', 
+    source_id CHARACTER VARYING(50),
+    PRIMARY KEY (dataelement_id, group_id, source_id),
+    CONSTRAINT fk_dataelement_dataelementgroup_dataelement FOREIGN KEY(dataelement_id, source_id) REFERENCES dataelement(uid, source_id),
+    CONSTRAINT fk_dataelement_dataelementgroup_dataelementgroup FOREIGN KEY(group_id, source_id) REFERENCES dataelementgroup(uid, source_id),
+    CONSTRAINT fk_dataelement_dataelementgroup_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+);
+
 -- DATA VALUE
 CREATE TABLE IF NOT EXISTS datavalue (
     dataelementid CHARACTER VARYING(11) NOT NULL,
