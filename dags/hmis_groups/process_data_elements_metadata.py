@@ -2,7 +2,7 @@
 from airflow.utils.task_group import TaskGroup
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 
-from macepa_plugin import DHIS2MetadataDownloadOperator, GeneratePostgreSQLOperator
+from macepa_plugin import DHIS2MetadataDownloadOperator, GeneratePostgreSQLOperator, GeneratePostgreSQLMNOperator
 
 
 def process_data_elements_metadata():
@@ -42,12 +42,37 @@ def process_data_elements_metadata():
             input_json_file="dags/tmp/json/dataElements.json"
         )
 
+        change_json_2_sql_dataelement_dataelementgroup = GeneratePostgreSQLMNOperator(
+            task_id='change_json_2_sql_dataelement_dataelementgroup',
+            table_name='dataelement_dataelementgroup',
+            json_key_table_columns_2_map={
+                'id': {'column': 'dataelement_id', 'type': 'str'},
+            },
+            target_list_key_for_mn='dataElementGroups',
+            mn_json_key_table_columns_2_map={
+                'id': {'column': 'group_id', 'type': 'str'},
+            },
+            primary_keys=[
+                'dataelement_id', 'group_id', 'source_id'
+            ],
+            output_sql_filename="dataElement-dataElementGroup.sql",
+            input_json_file="dags/tmp/json/dataElements.json"
+        )
+
         import_data_element = PostgresOperator(
             task_id='import_data_element',
             postgres_conn_id='postgres',
             sql="tmp/pg_sql/dataElements.sql"
         )
 
-        extract_data_element >> change_json_2_sql_data_element >> import_data_element
+        import_dataelement_dataelementgroup = PostgresOperator(
+            task_id='import_dataelement_dataelementgroup',
+            postgres_conn_id='postgres',
+            sql="tmp/pg_sql/dataElement-dataElementGroup.sql"
+        )
+
+        extract_data_element >> [change_json_2_sql_data_element,
+                                 change_json_2_sql_dataelement_dataelementgroup] >> \
+            import_data_element >> import_dataelement_dataelementgroup
 
     return group
