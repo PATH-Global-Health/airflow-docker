@@ -4,6 +4,8 @@ from macepa_plugin.operators.http_payload_split_operator import HTTPPayloadSplit
 from macepa_plugin.operators.dhis2_metadata_download_operator import DHIS2MetadataDownloadOperator
 from macepa_plugin.operators.generate_postgresql_operator import GeneratePostgreSQLOperator
 from macepa_plugin.operators.generate_postgresql_mn_operator import GeneratePostgreSQLMNOperator
+from macepa_plugin.operators.generate_mass_postgresql_operator import GenerateMassPostgreSQLOperator
+from macepa_plugin.operators.dhis2_data_download_operator import DHIS2DataDownloadOperator
 
 
 class MacepaPlugin(AirflowPlugin):
@@ -14,7 +16,9 @@ class MacepaPlugin(AirflowPlugin):
         HTTPPayloadSplitOperator,
         DHIS2MetadataDownloadOperator,
         GeneratePostgreSQLOperator,
-        GeneratePostgreSQLMNOperator
+        GeneratePostgreSQLMNOperator,
+        GenerateMassPostgreSQLOperator,
+        DHIS2DataDownloadOperator
     ]
 
     hooks = []
