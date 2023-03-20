@@ -1,5 +1,6 @@
 
 import json
+import os
 
 from airflow.models.baseoperator import BaseOperator
 from airflow.exceptions import AirflowException
@@ -45,6 +46,12 @@ class GenerateMassPostgreSQLOperator(BaseOperator):
             sql = []
             input_json_file = "{}/{}.json".format(
                 self.input_tmp_dir, org_unit[0])
+
+            # if the org unit has no data stored locally in json format,
+            # continue to the next org unit
+            if not os.path.exists(input_json_file):
+                continue
+
             try:
                 with open(input_json_file) as f:
                     json_rows = json.load(f)
