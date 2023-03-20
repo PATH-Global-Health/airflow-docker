@@ -63,4 +63,5 @@ class DHIS2DataDownloadOperator(BaseOperator):
 
             file_name = "{}/{}.json".format(self.tmp_dir, org_unit[0])
             with open(file_name, 'w') as file:
-                json.dump(data_values[self._data_value_tag], file)
+                if self._data_value_tag in data_values:
+                    json.dump(data_values[self._data_value_tag], file)
