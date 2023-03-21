@@ -54,14 +54,20 @@ class DHIS2DataDownloadOperator(BaseOperator):
                         **self._data_element_group
                     }
                 )
-                data_values = response_data.json()
+
             except RequestException as e:  # Always handle exceptions
                 raise AirflowException(
                     # Prefer f-strings to concatenation / string interpolation
                     f"An error occurred while fetching DHIS2 data (URL: {e.url}, status code: {e.code})"
                 )
 
-            file_name = "{}/{}.json".format(self.tmp_dir, org_unit[0])
-            with open(file_name, 'w') as file:
-                if self._data_value_tag in data_values:
-                    json.dump(data_values[self._data_value_tag], file)
+            try:
+                # converting into json will fail if the response is empty
+                data_values = response_data.json()
+                if data_values:
+                    file_name = "{}/{}.json".format(self.tmp_dir, org_unit[0])
+                    with open(file_name, 'w') as file:
+                        if self._data_value_tag in data_values:
+                            json.dump(data_values[self._data_value_tag], file)
+            except json.decoder.JSONDecodeError:
+                pass
