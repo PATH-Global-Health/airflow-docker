@@ -1,10 +1,13 @@
+import os
+from datetime import timedelta
+import shutil
+import itertools
+
 import airflow
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python import PythonOperator
 from airflow.hooks.base_hook import BaseHook
-
-from datetime import timedelta
 
 from hmis_groups.process_org_units_metadata import process_org_units_metadata
 from hmis_groups.process_categories_metadata import process_categories_metadata
@@ -36,10 +39,29 @@ def _set_data_source(ti, http_conn_id):
                  'id': 'source_id', 'url': url})
 
 
+def _clean_tmp_dir(main_dir, sub_dir):
+    # delete dir_path
+    shutil.rmtree(main_dir)
+
+    # create the the main and sub directories
+    for sd in sub_dir:
+        try:
+            os.makedirs(os.path.join(main_dir, sd))
+        except OSError:
+            pass
+
+
 with DAG('HMIS-DHIS2',  default_args=default_args,
          description='''A pipeline for reading data from HMIS/DHIS2 and storing it in a
          PostgreSQL staging database, after which the data is transformed and stored in the ClickHouse.''',
          schedule='0 19 * * *', catchup=False) as dag:
+
+    clean_tmp_dir = PythonOperator(
+        task_id='clean_tmp_dir',
+        python_callable=_clean_tmp_dir,
+        op_kwargs={"main_dir": 'dags/tmp', "sub_dir": [
+            'ch_sql', 'json', 'pg_sql', 'ch_sql/data', 'json/data', 'pg_sql/data']},
+    )
 
     create_staging_tables = PostgresOperator(
         task_id='create_staging_tables',
@@ -80,7 +102,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
     process_hmis_data_element_groups_metadata = process_data_element_groups_metadata()
     process_hmis_data = process_data()
 
-    create_staging_tables >> populate_data_source_tables >> set_data_source >> \
+    clean_tmp_dir >> create_staging_tables >> populate_data_source_tables >> set_data_source >> \
         [
             process_hmis_org_units_metadata,
             process_hmis_categories_metadata,
