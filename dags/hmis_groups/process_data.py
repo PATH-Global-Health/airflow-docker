@@ -1,5 +1,6 @@
 
 from datetime import datetime
+import glob
 
 from airflow.utils.task_group import TaskGroup
 from airflow.providers.postgres.operators.postgres import PostgresOperator
@@ -75,7 +76,14 @@ def process_data():
             ]
         )
 
+        # PostgresOperator gets the sql files in tmp/pg_sql... and not in dags/tmp/pg_sql...
+        # However glob.glob(...) gets the sql files in dags/tmp/pg_sql not in tmp/pg_sql...
+        # That is why we replace dags/ with empty string to make PostgresOperator get the sql files.
+        import_data_2_staging_db = PostgresOperator(task_id='import_data_2_staging_db',
+                                                    postgres_conn_id='postgres',
+                                                    sql=[x.replace('dags/', '') for x in glob.glob("dags/tmp/pg_sql/data/*.sql")])
+
         [get_hmis_last_updated,
-            get_org_unit_ids] >> download_data >> change_hmis_data_from_json_2_sql >> set_hmis_last_updated
+            get_org_unit_ids] >> download_data >> change_hmis_data_from_json_2_sql >> import_data_2_staging_db >> set_hmis_last_updated
 
     return group

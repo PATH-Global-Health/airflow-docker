@@ -393,7 +393,7 @@ CREATE TABLE IF NOT EXISTS datavalue (
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     value CHARACTER VARYING(50000),
     followup boolean,
-    deleted boolean NOT NULL,
+    deleted boolean,
     storedby CHARACTER VARYING(230),
     change change_status default 'insert', 
     source_id CHARACTER VARYING(50),
