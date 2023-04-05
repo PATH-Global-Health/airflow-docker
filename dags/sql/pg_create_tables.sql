@@ -63,6 +63,42 @@ CREATE OR REPLACE TRIGGER organisationunit_changes_trigger
     FOR EACH ROW
     EXECUTE PROCEDURE track_organisationunit_changes();
 
+
+-- ORGUNIT LEVEL
+CREATE TABLE IF NOT EXISTS orgunitlevel (
+    uid CHARACTER VARYING(11),
+    code CHARACTER VARYING(50),
+    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    name CHARACTER VARYING(230) NOT NULL,
+    level integer NOT NULL,
+    change change_status default 'insert',
+    source_id CHARACTER VARYING(50),
+    PRIMARY KEY (uid, source_id)
+);
+
+CREATE OR REPLACE FUNCTION track_orgunitlevel_changes()
+    RETURNS TRIGGER 
+    LANGUAGE PLPGSQL
+    AS
+$$
+BEGIN
+	IF NEW.name <> OLD.name OR NEW.level <> OLD.level THEN
+		 UPDATE orgunitlevel SET change = 'update'
+         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+	END IF;
+
+	RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER orgunitlevel_changes_trigger
+    AFTER UPDATE
+    ON orgunitlevel
+    FOR EACH ROW
+    EXECUTE PROCEDURE track_orgunitlevel_changes();
+
+
 -- CREATE TABLE IF NOT EXISTS period (
 --     id CHARACTER VARYING(50) PRIMARY KEY,
 --     title CHARACTER VARYING(150) NOT NULL,
