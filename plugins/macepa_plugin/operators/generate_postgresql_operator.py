@@ -12,7 +12,7 @@ class GeneratePostgreSQLOperator(BaseOperator):
 
     def cast(self, type, value):
         if type == "int" or type == "float":
-            return value
+            return str(value)
         elif type == 'timestamp' or type == 'date':
             return "TO_TIMESTAMP('{}', 'YYYY-MM-DD/THH24:MI:ss.MS')".format(value)
         return "'{}'".format(value)
