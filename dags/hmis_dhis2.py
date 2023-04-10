@@ -94,6 +94,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         sql="tmp/pg_sql/category-CategoryOptions.sql"
     )
 
+    process_hmis_orgunit_level_metadata = process_orgunit_level_metadata()
     process_hmis_org_units_metadata = process_org_units_metadata()
     process_hmis_categories_metadata = process_categories_metadata()
     process_hmis_category_combos_metadata = process_category_combos_metadata()
@@ -105,6 +106,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
 
     clean_tmp_dir >> create_staging_tables >> populate_data_source_tables >> set_data_source >> \
         [
+            process_hmis_orgunit_level_metadata,
             process_hmis_org_units_metadata,
             process_hmis_categories_metadata,
             process_hmis_category_combos_metadata,
