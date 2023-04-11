@@ -1,9 +1,8 @@
-CREATE TABLE organisation_unit
+CREATE TABLE IF NOT EXISTS orgunit
 (
-    user_id UInt32,
-    message String,
-    timestamp DateTime,
-    metric Float32
+    uid String,
+    name String,
+    level UInt16
 )
 ENGINE = MergeTree
-PRIMARY KEY (user_id, timestamp)
+PRIMARY KEY (level)
