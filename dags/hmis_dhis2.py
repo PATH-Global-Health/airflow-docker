@@ -8,6 +8,7 @@ from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python import PythonOperator
 from airflow.hooks.base_hook import BaseHook
+from airflow_clickhouse_plugin.operators.clickhouse_operator import ClickHouseOperator
 
 from hmis_groups.process_org_units_metadata import process_org_units_metadata
 from hmis_groups.process_categories_metadata import process_categories_metadata
@@ -64,6 +65,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
             'ch_sql', 'json', 'pg_sql', 'ch_sql/data', 'json/data', 'pg_sql/data']},
     )
 
+    # Tasks related to staging database
     create_staging_tables = PostgresOperator(
         task_id='create_staging_tables',
         postgres_conn_id='postgres',
@@ -104,6 +106,16 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
     process_hmis_data_element_groups_metadata = process_data_element_groups_metadata()
     process_hmis_data = process_data()
 
+    # Tasks related to the data warehouse
+
+    create_dw_tables = ClickHouseOperator(
+        task_id='create_dw_tables',
+        database='core',
+        clickhouse_conn_id='clickhouse',
+        sql="sql/ch_create_table.sql"
+    )
+
+    # Tasks relationship
     clean_tmp_dir >> create_staging_tables >> populate_data_source_tables >> set_data_source >> \
         [
             process_hmis_orgunit_level_metadata,
@@ -114,4 +126,4 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
             process_hmis_data_element_groups_metadata
         ] >> import_category_category_combos >> import_category_category_options >> \
         [process_hmis_category_option_combos_metadata,
-            process_hmis_data_elements_metadata] >> process_hmis_data
+            process_hmis_data_elements_metadata] >> process_hmis_data >> create_dw_tables
