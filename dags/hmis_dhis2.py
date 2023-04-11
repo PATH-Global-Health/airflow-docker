@@ -8,7 +8,8 @@ from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python import PythonOperator
 from airflow.hooks.base_hook import BaseHook
-from airflow_clickhouse_plugin.operators.clickhouse_operator import ClickHouseOperator
+# from airflow_clickhouse_plugin.operators.clickhouse_operator import ClickHouseOperator
+from macepa_plugin import ClickHouseMultiSqlOperator
 
 from hmis_groups.process_org_units_metadata import process_org_units_metadata
 from hmis_groups.process_categories_metadata import process_categories_metadata
@@ -108,11 +109,11 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
 
     # Tasks related to the data warehouse
 
-    create_dw_tables = ClickHouseOperator(
+    create_dw_tables = ClickHouseMultiSqlOperator(
         task_id='create_dw_tables',
         database='core',
         clickhouse_conn_id='clickhouse',
-        sql="sql/ch_create_table.sql"
+        sql_file='dags/sql/ch_create_table.sql'
     )
 
     # Tasks relationship
