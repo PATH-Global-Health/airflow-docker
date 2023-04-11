@@ -106,7 +106,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     extra_hosts:
-      - "staging_database:host-gateway"
+      - "host.docker.internal:host-gateway"
 
   airflow-scheduler:
     <<: *airflow-common
@@ -126,7 +126,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     extra_hosts:
-      - "staging_database:host-gateway"
+      - "host.docker.internal:host-gateway"
 
   airflow-triggerer:
     <<: *airflow-common
@@ -146,7 +146,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     extra_hosts:
-      - "staging_database:host-gateway"
+      - "host.docker.internal:host-gateway"
 
   airflow-init:
     <<: *airflow-common
