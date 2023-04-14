@@ -5,10 +5,10 @@ import glob
 from airflow.utils.task_group import TaskGroup
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.hooks.postgres_hook import PostgresHook
 from airflow.models import Variable
 
 from macepa_plugin import GenerateMassPostgreSQLOperator, DHIS2DataDownloadOperator
+from helpers.utils import query_and_push
 
 
 def _get_hmis_last_updated(ti):
@@ -27,13 +27,6 @@ def _check_json_data_available(ti):
         return 'process_data.import_data_2_staging_db'
 
 
-def query_and_push(ti, sql, postgres_conn_id):
-    pg_hook = PostgresHook(postgres_conn_id=postgres_conn_id)
-    records = pg_hook.get_records(sql=sql)
-    ti.xcom_push(key="get_org_unit_ids", value=records)
-    # return records
-
-
 def process_data():
     with TaskGroup('process_data', tooltip='Download and import data into the staging database') as group:
         get_hmis_last_updated = PythonOperator(
@@ -47,7 +40,8 @@ def process_data():
             provide_context=True,
             op_kwargs={
                 'sql': "select uid from organisationunit where leaf='t';",
-                'postgres_conn_id': 'postgres'
+                'postgres_conn_id': 'postgres',
+                'key': 'get_org_unit_ids'
             }
         )
 
