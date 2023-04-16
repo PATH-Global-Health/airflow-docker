@@ -9,13 +9,6 @@ class ClickHouseMultiSqlOperator(BaseOperator):
     This operator allows you to run multiple sql statements from sql file against ClickHouse.
     """
 
-    def cast(self, type, value):
-        if type == "int" or type == "float":
-            return value
-        elif type == 'timestamp' or type == 'date':
-            return "TO_TIMESTAMP('{}', 'YYYY-MM-DD/THH24:MI:ss.MS')".format(value)
-        return "'{}'".format(value)
-
     def __init__(self, sql_file: str, clickhouse_conn_id: str, database: str, parameters: Optional[Dict[str, Any]] = None, **kwargs):
         super().__init__(**kwargs)
 
