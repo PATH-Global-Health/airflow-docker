@@ -2,7 +2,7 @@
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'change_status') THEN
-        CREATE TYPE change_status AS ENUM ('insert', 'update');
+        CREATE TYPE change_status AS ENUM ('insert', 'update', '');
     END IF;
 END$$;
 
@@ -12,8 +12,31 @@ CREATE TABLE IF NOT EXISTS data_source (
     id CHARACTER VARYING(50) PRIMARY KEY,
     title CHARACTER VARYING(150) NOT NULL,
     url CHARACTER VARYING(255) NOT NULL,
-    description CHARACTER VARYING(255)
+    description CHARACTER VARYING(255),
+    change change_status default 'insert'
 );
+
+CREATE OR REPLACE FUNCTION track_data_source_changes()
+    RETURNS TRIGGER 
+    LANGUAGE PLPGSQL
+    AS
+$$
+BEGIN
+	IF NEW.id <> OLD.id OR NEW.title <> OLD.title OR 
+        NEW.url <> OLD.url or NEW.description <> OLD.description THEN
+		 UPDATE data_source SET change = 'update'
+         WHERE uid = NEW.uid;
+	END IF;
+
+	RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER odata_source_changes_trigger
+    AFTER UPDATE
+    ON data_source
+    FOR EACH ROW
+    EXECUTE PROCEDURE track_data_source_changes();
 
 
 -- ORGANISATION UNIT
