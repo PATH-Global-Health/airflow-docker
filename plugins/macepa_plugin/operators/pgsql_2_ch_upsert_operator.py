@@ -6,7 +6,7 @@ from typing import List
 from airflow.models.baseoperator import BaseOperator
 from airflow.exceptions import AirflowException
 from airflow.hooks.postgres_hook import PostgresHook
-
+from airflow.operators.python import PythonOperator
 
 class PGSQL2CHUpsertOperator(BaseOperator):
     """
@@ -92,5 +92,3 @@ class PGSQL2CHUpsertOperator(BaseOperator):
         # write the sql to file
         with open(os.path.join(self.output_dir, self.output_file), 'w') as f:
             f.write('\n'.join(sql))
-            
-
