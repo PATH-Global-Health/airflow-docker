@@ -9,8 +9,8 @@ from macepa_plugin import ClickHouseMultiSqlOperator
 def populate_data_source_in_data_warehouse():
     with TaskGroup('populate_data_source_in_data_warehouse', tooltip='Populate the data source table in the data warehouse') as group:
 
-        genereate_ch_sql_from_pg_for_data_source = PGSQL2CHUpsertOperator(
-            task_id='genereate_ch_sql_from_pg_for_data_source',
+        generate_ch_sql_from_pg_for_data_source = PGSQL2CHUpsertOperator(
+            task_id='generate_ch_sql_from_pg_for_data_source',
             postgres_conn_id='postgres',
             ch_table_name='data_source',
             ch_pks=['id'],
@@ -32,6 +32,6 @@ def populate_data_source_in_data_warehouse():
             sql="update data_source set change = '' where change = 'update' or change = 'insert'"
         )
 
-        genereate_ch_sql_from_pg_for_data_source >> import_data_source_into_ch >> reset_data_source
+        generate_ch_sql_from_pg_for_data_source >> import_data_source_into_ch >> reset_data_source
 
     return group
