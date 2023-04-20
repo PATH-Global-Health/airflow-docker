@@ -7,6 +7,7 @@ from macepa_plugin.operators.generate_postgresql_mn_operator import GeneratePost
 from macepa_plugin.operators.generate_mass_postgresql_operator import GenerateMassPostgreSQLOperator
 from macepa_plugin.operators.dhis2_data_download_operator import DHIS2DataDownloadOperator
 from macepa_plugin.operators.pgsql_2_ch_upsert_operator import PGSQL2CHUpsertOperator
+from macepa_plugin.operators.pgsql_2_ch_insert_operator import PGSQL2CHInsertOperator
 from macepa_plugin.operators.clickhouse_multi_sql_operator import ClickHouseMultiSqlOperator
 
 
@@ -22,6 +23,7 @@ class MacepaPlugin(AirflowPlugin):
         GenerateMassPostgreSQLOperator,
         DHIS2DataDownloadOperator,
         PGSQL2CHUpsertOperator,
+        PGSQL2CHInsertOperator,
         ClickHouseMultiSqlOperator
     ]
 

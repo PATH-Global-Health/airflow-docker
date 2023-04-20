@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS orgunitlevel (
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
+    previous_name CHARACTER VARYING(230),
     level integer NOT NULL,
     change change_status default 'insert',
     source_id CHARACTER VARYING(50),
@@ -107,7 +108,7 @@ CREATE OR REPLACE FUNCTION track_orgunitlevel_changes()
 $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.level <> OLD.level THEN
-		 UPDATE orgunitlevel SET change = 'update'
+		 UPDATE orgunitlevel SET change = 'update', previous_name = OLD.name
          WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
