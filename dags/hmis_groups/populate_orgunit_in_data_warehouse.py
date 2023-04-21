@@ -5,7 +5,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python import PythonOperator
 
-from macepa_plugin import PGSQL2CHInsertOperator, PGSQL2JSONOperator, ClickHouseMultiSqlOperator
+from macepa_plugin import PGSQL2CHInsertOperator, PGSQL2JSONOperator, ClickHouseMultiSqlOperator, JSON2CHInsertOperator
 from helpers.utils import query_and_push
 
 CH_ORGUNIT_TABLE = "orgunit"
@@ -133,9 +133,17 @@ def populate_orgunit_in_data_warehouse():
             }
         )
 
-        generate_and_store_org_unit_hierarchy = PythonOperator(
-            task_id='generate_and_store_org_unit_hierarchy',
+        generate_and_store_org_unit_hierarchy_in_json = PythonOperator(
+            task_id='generate_and_store_org_unit_hierarchy_in_json',
             python_callable=generate_org_unit_hierarchy
+        )
+
+        convert_org_unit_hierarchy_in_json_2_ch_sql = JSON2CHInsertOperator(
+            task_id='convert_org_unit_hierarchy_in_json_2_ch_sql',
+            ch_table_name='orgunit',
+            input_file=os.path.join(ORG_UNIT_DIR, ORG_UNIT_HIERARCHY_JSON),
+            exclude_fields=['change', 'path', 'parentid'],
+            output_file="orgunit.sql"
         )
 
         # generate_ch_sql_from_pg_for_orgunit = PGSQL2CHInsertOperator(
@@ -163,6 +171,6 @@ def populate_orgunit_in_data_warehouse():
 
         get_org_unit_levels >> generate_orgunit_columns_schema >> import_orgunit_schema_into_ch >> \
             reset_orgunit_level_in_pgsql >> [export_orgunit_from_pgsql_2_json, get_org_unit_levels_id_name] >> \
-                generate_and_store_org_unit_hierarchy
+                generate_and_store_org_unit_hierarchy_in_json >> convert_org_unit_hierarchy_in_json_2_ch_sql
 
     return group
