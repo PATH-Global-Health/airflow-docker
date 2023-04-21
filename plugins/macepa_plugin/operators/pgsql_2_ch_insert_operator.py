@@ -20,7 +20,7 @@ class PGSQL2CHInsertOperator(BaseOperator):
             return "cast('{}', 'DateTime64')".format(value)
         return "'{}'".format(value)
 
-    def __init__(self, postgres_conn_id: str, ch_table_name:str, ch_pks: List[str], sql: str, exclude_fields: List[str], output_file: str, output_dir="dags/tmp/ch_sql/data", **kwargs):
+    def __init__(self, postgres_conn_id: str, ch_table_name:str, sql: str, exclude_fields: List[str], output_file: str, output_dir="dags/tmp/ch_sql/data", **kwargs):
         super().__init__(**kwargs)
 
         if not postgres_conn_id:
@@ -28,9 +28,6 @@ class PGSQL2CHInsertOperator(BaseOperator):
 
         if not ch_table_name:
             raise AirflowException('No valid table name for ClickHouse "ch_table_name" supplied.')
-
-        if not ch_pks:
-            raise AirflowException('No valid primary keys for ClickHouse "ch_pks" supplied.')
 
         if not sql:
             raise AirflowException('No valid sql supplied.')
@@ -43,7 +40,6 @@ class PGSQL2CHInsertOperator(BaseOperator):
 
         self.postgres_conn_id = postgres_conn_id
         self.ch_table_name = ch_table_name
-        self.ch_pks = ch_pks
         self.sql = sql
         self.exclude_fields = exclude_fields
         self.output_file = output_file
