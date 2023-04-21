@@ -1,4 +1,5 @@
 import os
+import json
 
 from airflow.utils.task_group import TaskGroup
 from airflow.providers.postgres.operators.postgres import PostgresOperator
@@ -9,6 +10,9 @@ from helpers.utils import query_and_push
 
 CH_ORGUNIT_TABLE = "orgunit"
 CH_ORGUNIT_TABLE_SCHEMA = "dags/tmp/ch_sql/org_unit_schema.sql"
+ORG_UNIT_DIR = "dags/tmp/json"
+ORG_UNIT_JSON = "orgunits.json"
+ORG_UNIT_HIERARCHY_JSON = "orgunits_hierarchy.json"
 
 def generate_orgunit_schema(ti):
     levels = ti.xcom_pull(key='get_org_unit_levels')
@@ -28,6 +32,55 @@ def generate_orgunit_schema(ti):
     with open(os.path.join(CH_ORGUNIT_TABLE_SCHEMA), 'w') as f:
             f.write('\n'.join(sql))
 
+def generate_org_unit_hierarchy(ti):
+    levels = ti.xcom_pull(key='get_org_unit_levels_id_name')
+    ou_levels = {}
+    # organize levels in the form
+    # {
+    #   "1": {
+    #       "id": "ues21LMtV",
+    #       "name": "National"
+    #   }
+    #   "2": {
+    #       "id": "ckt35MMtc",
+    #       "name": "Regional"
+    #   }
+    # ...
+    # }
+    for index, level in enumerate(levels):
+        ou_levels[index] = {"uid": level[0], "name": level[1]}
+
+    print(ou_levels)
+    # read all the org units to transform the org unit hierarchy in the form of id to names and ids
+    with open(os.path.join(ORG_UNIT_DIR, ORG_UNIT_JSON), 'r', encoding="utf-8") as f:
+        ous = json.load(f)
+        
+        org_units_hierarchy = {}
+        # The "path" column is stores org unit hierarchy ids like
+        # "/JWOFOcZt7av/FzSzYdX25ch/LtgDnjaiH9b/V1Ora4NbSEE/Nimdjs72wnV"
+        # Split the path by forward slash and search the name of the org unit using the ids
+        # then store the names and ids in the org_units_hierarchy array.
+        for uid, ou_row in ous.items():
+            if ou_row['path']['value'].strip().__len__() > 0:
+                parent_uids = ou_row['path']['value'].split("/")
+                hierarchy = {}
+
+                for index, parent_uid in enumerate(parent_uids):
+                    if parent_uid.strip().__len__() > 0:
+                        if index - 1 in ou_levels:
+                            hierarchy[ou_levels[index - 1]['uid']]= {"type": "object", "value": parent_uid}
+                            hierarchy[ou_levels[index - 1]['name']]= {"type": "object", "value": ous[parent_uid]["name"]["value"]}
+     
+                org_units_hierarchy[uid] = hierarchy
+        
+        # insert the hierarchy information into the orgunits json
+        for uid, ou_partial_row in org_units_hierarchy.items():
+            if uid in ous:
+                ous[uid].update(ou_partial_row)
+
+    # Store the org units json in the orgunit_hierarchy json file
+    with open(os.path.join(ORG_UNIT_DIR, ORG_UNIT_HIERARCHY_JSON), 'w') as f:
+        f.write(json.dumps(ous))
 
 def populate_orgunit_in_data_warehouse():
     with TaskGroup('populate_orgunit_in_data_warehouse', tooltip='Populate the orgunit table in the data warehouse') as group:
@@ -66,10 +119,24 @@ def populate_orgunit_in_data_warehouse():
             postgres_conn_id='postgres',
             sql="select uid, name, parentid, path, source_id, change from organisationunit where change = 'insert' or change ='update'",
             unique_keys=['uid'],
-            output_file="orgunits.json"
+            output_file=ORG_UNIT_JSON
         )
-        
 
+        get_org_unit_levels_id_name = PythonOperator(
+            task_id='get_org_unit_levels_id_name',
+            python_callable=query_and_push,
+            provide_context=True,
+            op_kwargs={
+                'sql': "select uid, name, level from orgunitlevel order by level;",
+                'postgres_conn_id': 'postgres',
+                'key': 'get_org_unit_levels_id_name'
+            }
+        )
+
+        generate_and_store_org_unit_hierarchy = PythonOperator(
+            task_id='generate_and_store_org_unit_hierarchy',
+            python_callable=generate_org_unit_hierarchy
+        )
 
         # generate_ch_sql_from_pg_for_orgunit = PGSQL2CHInsertOperator(
         #     task_id='generate_ch_sql_from_pg_for_orgunit',
@@ -95,6 +162,7 @@ def populate_orgunit_in_data_warehouse():
         # )
 
         get_org_unit_levels >> generate_orgunit_columns_schema >> import_orgunit_schema_into_ch >> \
-            reset_orgunit_level_in_pgsql >> export_orgunit_from_pgsql_2_json
+            reset_orgunit_level_in_pgsql >> [export_orgunit_from_pgsql_2_json, get_org_unit_levels_id_name] >> \
+                generate_and_store_org_unit_hierarchy
 
     return group
