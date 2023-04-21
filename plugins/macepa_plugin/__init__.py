@@ -9,6 +9,7 @@ from macepa_plugin.operators.dhis2_data_download_operator import DHIS2DataDownlo
 from macepa_plugin.operators.pgsql_2_ch_upsert_operator import PGSQL2CHUpsertOperator
 from macepa_plugin.operators.pgsql_2_ch_insert_operator import PGSQL2CHInsertOperator
 from macepa_plugin.operators.clickhouse_multi_sql_operator import ClickHouseMultiSqlOperator
+from macepa_plugin.operators.pgsql_2_json_operator import PGSQL2JSONOperator
 
 
 class MacepaPlugin(AirflowPlugin):
@@ -24,6 +25,7 @@ class MacepaPlugin(AirflowPlugin):
         DHIS2DataDownloadOperator,
         PGSQL2CHUpsertOperator,
         PGSQL2CHInsertOperator,
+        PGSQL2JSONOperator,
         ClickHouseMultiSqlOperator
     ]
 

@@ -4,8 +4,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python import PythonOperator
 
-from macepa_plugin import PGSQL2CHInsertOperator
-from macepa_plugin import ClickHouseMultiSqlOperator
+from macepa_plugin import PGSQL2CHInsertOperator, PGSQL2JSONOperator, ClickHouseMultiSqlOperator
 from helpers.utils import query_and_push
 
 CH_ORGUNIT_TABLE = "orgunit"
@@ -62,6 +61,15 @@ def populate_orgunit_in_data_warehouse():
             sql="update orgunitlevel set change = '' where change = 'update' or change = 'insert'"
         )
 
+        export_orgunit_from_pgsql_2_json = PGSQL2JSONOperator(
+            task_id='export_orgunit_from_pgsql_2_json',
+            postgres_conn_id='postgres',
+            sql="select uid, name, parentid, path, source_id, change from organisationunit where change = 'insert' or change ='update'",
+            unique_keys=['uid'],
+            output_file="orgunits.json"
+        )
+        
+
 
         # generate_ch_sql_from_pg_for_orgunit = PGSQL2CHInsertOperator(
         #     task_id='generate_ch_sql_from_pg_for_orgunit',
@@ -86,6 +94,7 @@ def populate_orgunit_in_data_warehouse():
         #     sql="update organisationunit set change = '' where change = 'update' or change = 'insert'"
         # )
 
-        get_org_unit_levels >> generate_orgunit_columns_schema >> import_orgunit_schema_into_ch >> reset_orgunit_level_in_pgsql
+        get_org_unit_levels >> generate_orgunit_columns_schema >> import_orgunit_schema_into_ch >> \
+            reset_orgunit_level_in_pgsql >> export_orgunit_from_pgsql_2_json
 
     return group
