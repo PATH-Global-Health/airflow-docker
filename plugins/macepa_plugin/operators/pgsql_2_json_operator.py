@@ -13,28 +13,28 @@ class PGSQL2JSONOperator(BaseOperator):
     This operator allows you to dump the result of select query from PostgreSQL to JSON file.
     File structure
     {
-        "merged_primary_key_with_dashes": [
-            "column_name": {
+        "merged_primary_key_with_dashes_1": {
+            "column_name_1": {
                 "type": "type",
                 "value": "value"
             },
-            "column_name": {
-                "type": "type",
-                "value": "value"
-            },
-            ...
-        ],
-        "merged_primary_key_with_dashes": [
-           "column_name": {
-                "type": "type",
-                "value": "value"
-            },
-            "column_name": {
+            "column_name_2": {
                 "type": "type",
                 "value": "value"
             },
             ...
-        ],
+        },
+        "merged_primary_key_with_dashes_2": {
+           "column_name_1": {
+                "type": "type",
+                "value": "value"
+            },
+            "column_name_2": {
+                "type": "type",
+                "value": "value"
+            },
+            ...
+        },
         ...
     }
     """
@@ -65,17 +65,16 @@ class PGSQL2JSONOperator(BaseOperator):
 
     def change_row_to_json(self, types, columns, row):
        
-        cols = []
+        cols = {}
         pks = []
 
         for column in columns:
             if column in self.unique_keys:
                 pks.append(row[column])
-            cols.append({column: {"type":str(types[column]), "value":str(row[column])}})
+            cols[column] = {"type":str(types[column]), "value":str(row[column])}
 
         return '-'.join(pks), cols
         
-
     def execute(self, context):
         data = {}
 
