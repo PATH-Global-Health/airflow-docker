@@ -148,8 +148,8 @@ def populate_orgunit_in_data_warehouse():
             output_file=ORG_UNIT_JSON
         )
 
-        get_org_unit_levels_id_name = PythonOperator(
-            task_id='get_org_unit_levels_id_name',
+        get_org_unit_levels_ids_and_names = PythonOperator(
+            task_id='get_org_unit_levels_ids_and_names',
             python_callable=query_and_push,
             provide_context=True,
             op_kwargs={
@@ -204,7 +204,7 @@ def populate_orgunit_in_data_warehouse():
         )
 
         get_org_unit_levels >> generate_orgunit_columns_schema >> import_orgunit_schema_into_ch >> \
-            reset_orgunit_level_in_pgsql >> [export_orgunit_from_pgsql_2_json, get_org_unit_levels_id_name] >> \
+            reset_orgunit_level_in_pgsql >> [export_orgunit_from_pgsql_2_json, get_org_unit_levels_ids_and_names] >> \
                 generate_and_store_org_unit_hierarchy_in_csv >> import_orgunit_into_ch >> reset_orgunit_in_pgsql
 
     return group
