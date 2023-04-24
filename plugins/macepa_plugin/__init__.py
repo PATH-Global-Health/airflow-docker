@@ -11,6 +11,7 @@ from macepa_plugin.operators.pgsql_2_ch_insert_operator import PGSQL2CHInsertOpe
 from macepa_plugin.operators.clickhouse_multi_sql_operator import ClickHouseMultiSqlOperator
 from macepa_plugin.operators.pgsql_2_json_operator import PGSQL2JSONOperator
 from macepa_plugin.operators.json_2_ch_insert_operator import JSON2CHInsertOperator
+from macepa_plugin.operators.load_csv_2_ch_operator import LoadCSV2CHOperator
 
 
 class MacepaPlugin(AirflowPlugin):
@@ -28,7 +29,8 @@ class MacepaPlugin(AirflowPlugin):
         PGSQL2CHInsertOperator,
         PGSQL2JSONOperator,
         ClickHouseMultiSqlOperator,
-        JSON2CHInsertOperator
+        JSON2CHInsertOperator,
+        LoadCSV2CHOperator
     ]
 
     hooks = []

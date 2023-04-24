@@ -65,7 +65,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         task_id='clean_tmp_dir',
         python_callable=_clean_tmp_dir,
         op_kwargs={"main_dir": 'dags/tmp', "sub_dir": [
-            'ch_sql', 'json', 'pg_sql', 'ch_sql/data', 'json/data', 'pg_sql/data']},
+            'csv','ch_sql', 'json', 'pg_sql', 'csv/data', 'ch_sql/data', 'json/data', 'pg_sql/data']},
     )
 
     # Tasks related to staging database
