@@ -14,8 +14,8 @@ class JSON2CHInsertOperator(BaseOperator):
 
     def cast(self, type, value):
         if type == "int64" or type == "float64":
-            return value
-        elif type == 'datetime64':
+            return str(value)
+        elif type == 'datetime64' or type == 'datetime64[ns]':
             return "cast('{}', 'DateTime64')".format(value)
         return "'{}'".format(value)
 
