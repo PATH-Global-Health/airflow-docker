@@ -22,6 +22,7 @@ from hmis_groups.process_orgunit_level_metadata import process_orgunit_level_met
 from hmis_groups.process_data import process_data
 from hmis_groups.populate_data_source_in_data_warehouse import populate_data_source_in_data_warehouse
 from hmis_groups.populate_orgunit_in_data_warehouse import populate_orgunit_in_data_warehouse
+from hmis_groups.populate_category_in_data_warehouse import populate_category_in_data_warehouse
 
 default_args = {
     'owner': 'airflow',
@@ -110,6 +111,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
     process_hmis_data = process_data()
     populate_hmis_data_source_in_data_warehouse = populate_data_source_in_data_warehouse()
     populate_hmis_orgunit_in_data_warehouse = populate_orgunit_in_data_warehouse()
+    populate_hmis_category_in_data_warehouse = populate_category_in_data_warehouse()
 
     # Tasks related to the data warehouse
 
@@ -132,4 +134,5 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         ] >> import_category_category_combos >> import_category_category_options >> \
         [process_hmis_category_option_combos_metadata,
             process_hmis_data_elements_metadata] >> process_hmis_data >> create_dw_tables >> \
-            populate_hmis_data_source_in_data_warehouse >> populate_hmis_orgunit_in_data_warehouse
+            populate_hmis_data_source_in_data_warehouse >> populate_hmis_orgunit_in_data_warehouse >> \
+                populate_hmis_category_in_data_warehouse
