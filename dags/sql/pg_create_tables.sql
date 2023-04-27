@@ -210,6 +210,7 @@ CREATE TABLE IF NOT EXISTS  dataelementcategory (
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
+    previous_name CHARACTER VARYING(230),
     datadimension boolean,
     change change_status default 'insert',
     source_id CHARACTER VARYING(50),
@@ -224,7 +225,7 @@ CREATE OR REPLACE FUNCTION track_dataelementcategory_changes()
 $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.datadimension <> OLD.datadimension THEN
-		 UPDATE dataelementcategory SET change = 'update'
+		 UPDATE dataelementcategory SET change = 'update', previous_name = OLD.name
          WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 
