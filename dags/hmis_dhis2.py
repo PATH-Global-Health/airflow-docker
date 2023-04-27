@@ -134,5 +134,5 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         ] >> import_category_category_combos >> import_category_category_options >> \
         [process_hmis_category_option_combos_metadata,
             process_hmis_data_elements_metadata] >> process_hmis_data >> create_dw_tables >> \
-            populate_hmis_data_source_in_data_warehouse >> populate_hmis_orgunit_in_data_warehouse >> \
-                populate_hmis_category_in_data_warehouse
+            populate_hmis_data_source_in_data_warehouse >> [populate_hmis_orgunit_in_data_warehouse,
+                populate_hmis_category_in_data_warehouse]
