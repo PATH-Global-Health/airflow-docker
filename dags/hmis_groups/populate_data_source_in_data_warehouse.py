@@ -1,4 +1,3 @@
-
 from airflow.utils.task_group import TaskGroup
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 
@@ -23,7 +22,7 @@ def populate_data_source_in_data_warehouse():
             task_id='import_data_source_into_ch',
             database='core',
             clickhouse_conn_id='clickhouse',
-            sql_file='dags/tmp/ch_sql/data/data_source.sql'
+            sql_file='dags/tmp/ch_sql/data_source.sql'
         )
 
         reset_data_source = PostgresOperator(

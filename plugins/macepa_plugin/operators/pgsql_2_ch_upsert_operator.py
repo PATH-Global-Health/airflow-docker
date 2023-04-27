@@ -20,7 +20,7 @@ class PGSQL2CHUpsertOperator(BaseOperator):
             return "cast('{}', 'DateTime64')".format(value)
         return "'{}'".format(value)
 
-    def __init__(self, postgres_conn_id: str, ch_table_name:str, ch_pks: List[str], sql: str, exclude_fields: List[str], output_file: str, output_dir="dags/tmp/ch_sql/data", **kwargs):
+    def __init__(self, postgres_conn_id: str, ch_table_name:str, ch_pks: List[str], sql: str, exclude_fields: List[str], output_file: str, output_dir="dags/tmp/ch_sql", **kwargs):
         super().__init__(**kwargs)
 
         if not postgres_conn_id:
