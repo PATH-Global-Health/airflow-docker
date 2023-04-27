@@ -5,6 +5,8 @@ from airflow.hooks.postgres_hook import PostgresHook
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 
+from macepa_plugin import ClickHouseMultiSqlOperator
+
 CH_CATEGORY_TABLE = 'category'
 CH_CATEGORY_TABLE_SCHEMA = 'dags/tmp/ch_sql/category_schema.sql'
 
@@ -114,7 +116,14 @@ def populate_category_in_data_warehouse():
             python_callable=generate_category_schema
         )
 
-        generate_category_structure_in_json >> generate_category_columns_schema
+        import_category_schema_into_ch = ClickHouseMultiSqlOperator(
+            task_id='import_category_schema_into_ch',
+            database='core',
+            clickhouse_conn_id='clickhouse',
+            sql_file=CH_CATEGORY_TABLE_SCHEMA
+        )
+
+        generate_category_structure_in_json >> generate_category_columns_schema >> import_category_schema_into_ch
 
     return group
 
