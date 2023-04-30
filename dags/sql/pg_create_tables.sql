@@ -344,6 +344,18 @@ CREATE OR REPLACE TRIGGER categoryoptioncombo_changes_trigger
     EXECUTE PROCEDURE track_categoryoptioncombo_changes();
 
 
+--CATEGORY OPTION COMBO - CATEGORY OPTIONS
+
+CREATE TABLE IF NOT EXISTS categoryoptioncombo_categoryoptions (
+    category_option_combo_id CHARACTER VARYING(11),
+    category_option_id CHARACTER VARYING(11),
+    source_id CHARACTER VARYING(50),
+    PRIMARY KEY (category_option_combo_id, category_option_id, source_id),
+    CONSTRAINT fk_categoryoptioncombo_categoryoptions_categoryoptioncombo FOREIGN KEY(category_option_combo_id, source_id) REFERENCES categoryoptioncombo(uid, source_id),
+    CONSTRAINT fk_categoryoptioncombo_categoryoptions_dataelementcategoryoption FOREIGN KEY(category_option_id, source_id) REFERENCES dataelementcategoryoption(uid, source_id),
+    CONSTRAINT fk_categoryoptioncombo_categoryoptions_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+);
+
 -- DATA ELEMENT
 CREATE TABLE IF NOT EXISTS dataelement (
     uid CHARACTER VARYING(11) NOT NULL,
