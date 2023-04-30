@@ -2,6 +2,7 @@ import os
 import json
 
 from airflow.hooks.postgres_hook import PostgresHook
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 
@@ -77,11 +78,11 @@ CH_CATEGORY_TABLE_SCHEMA = 'dags/tmp/ch_sql/category_schema.sql'
 
 def generate_category_schema(ti):
     pg_hook = PostgresHook(postgres_conn_id='postgres')
-    pg_df = pg_hook.get_pandas_df('''
+    pg_df = pg_hook.get_pandas_df("""
         select uid, name, previous_name, change 
         from dataelementcategory 
-        where change = "insert" or change = "update";
-        ''')
+        where change = 'insert' or change = 'update';
+        """)
     
     sql = []
     previous_field_name = ""
@@ -124,13 +125,13 @@ def populate_category_in_data_warehouse():
             sql_file=CH_CATEGORY_TABLE_SCHEMA
         )
 
-        reset_category_level_in_pgsql = PostgresOperator(
-            task_id='reset_category_level_in_pgsql',
+        reset_category_in_pgsql = PostgresOperator(
+            task_id='reset_category_in_pgsql',
             postgres_conn_id='postgres',
             sql="update dataelementcategory set change = '' where change = 'update' or change = 'insert'"
         )
 
-        generate_category_columns_schema >> import_category_schema_into_ch >> reset_category_level_in_pgsql
+        generate_category_columns_schema >> import_category_schema_into_ch >> reset_category_in_pgsql
 
     return group
 
