@@ -26,6 +26,10 @@ def generate_category_schema(ti):
     previous_field_name = ""
 
     # iterate over categories under category combo and make the ids and names as columns in category table of clickhouse
+    # row[0] - uid
+    # row[1] - name
+    # row[2] - previous_name
+    # row[3] - change
     for index, row in pg_df.iterrows():
         if row[3] == "insert":
             if not previous_field_name:
@@ -38,6 +42,7 @@ def generate_category_schema(ti):
                     CH_CATEGORY_TABLE, row[0], previous_field_name))
                 sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER {};'.format(
                     CH_CATEGORY_TABLE, row[1].replace(" ", ""), row[0]))
+            # remove space in column name
             previous_field_name = row[1].replace(" ", "")
         elif row[3] == "update":
             # Users are only allowed to change the names of the categories not their IDs in DHIS2.
@@ -84,6 +89,13 @@ def convert_category_metadata(ti):
        order by coc.uid ;""")
     data = {}
 
+    # row[0] - category option combo uid
+    # row[1] - category option combo name e.g. Male, 0-4 years, control
+    # row[2] - data element category uid
+    # row[3] - data element category name e.g. Sex
+    # row[4] - data element category option uid
+    # row[5] - data element category option name e.g. Male
+    # row[6] - data source id
     for index, row in pg_df.iterrows():
         if row[0] not in data:
             data[row[0]] = {"name": row[1], "source": row[6], "options": {}}
@@ -115,7 +127,8 @@ def convert_category_metadata_in_json_2_sql(ti):
             values.append("'{}'".format(category_value['source']))
 
             for category_option_key, category_option_value in category_value['options'].items():
-                cols.append(category_option_key)
+                # remove space in column name
+                cols.append(category_option_key.replace(' ', ''))
                 values.append("'{}'".format(category_option_value))
 
             sql.append("INSERT INTO category ({}) VALUES ({})".format(
@@ -127,10 +140,6 @@ def convert_category_metadata_in_json_2_sql(ti):
 
 def populate_category_in_data_warehouse():
     with TaskGroup('populate_category_in_data_warehouse', tooltip='Populate the category table in the data warehouse') as group:
-        # generate_category_structure_in_json = PythonOperator(
-        #     task_id='generate_category_structure_in_json',
-        #     python_callable=generate_category_structure
-        # )
 
         generate_category_columns_schema = PythonOperator(
             task_id='generate_category_columns_schema',
