@@ -9,9 +9,9 @@ from airflow.operators.python import PythonOperator
 from macepa_plugin import ClickHouseMultiSqlOperator
 
 CH_CATEGORY_TABLE = 'category'
-CH_CATEGORY_TABLE_SCHEMA = 'dags/tmp/ch_sql/category_schema.sql'
-CATEGORY_METADATA_JSON_FILE = 'dags/tmp/json/category_metadata.json'
-CATEGORY_METADATA_SQL_FILE = 'dags/tmp/ch_sql/category_metadata.sql'
+CH_CATEGORY_TABLE_SCHEMA = 'dags/tmp/ch_sql/categorySchema.sql'
+CATEGORY_METADATA_JSON_FILE = 'dags/tmp/json/categoryMetadata.json'
+CATEGORY_METADATA_SQL_FILE = 'dags/tmp/ch_sql/categoryMetadata.sql'
 
 # category_structure = {
 #         "CategoryComboID": {
@@ -144,10 +144,10 @@ def convert_category_metadata(ti):
 
     for index, row in pg_df.iterrows():
         if row[0] not in data:
-            data[row[0]] = {"name": row[1], "source": row[6]}
+            data[row[0]] = {"name": row[1], "source": row[6], "options": {}}
 
-        data[row[0]][row[2]] = row[4]
-        data[row[0]][row[3]] = row[5]
+        data[row[0]]["options"][row[2]] = row[4]
+        data[row[0]]["options"][row[3]] = row[5]
 
     with open(CATEGORY_METADATA_JSON_FILE, 'w') as file:
         file.write(json.dumps(data))
@@ -159,19 +159,22 @@ def convert_category_metadata_in_json_2_sql(ti):
         categories = json.load(f)
         sql = []
 
-        values = []
-        cols = []
-
         for category_key, category_value in categories.items():
-            cols.append(category_key)
-            values.append(category_value[category_key]['name'])
+            values = []
+            cols = []
+
+            cols.append('categoryoptioncomboid')
+            values.append("'{}'".format(category_key))
+
+            cols.append('categoryoptioncomboname')
+            values.append("'{}'".format(category_value['name']))
 
             cols.append('source_id')
-            values.append(category_value[category_key]['source'])
+            values.append("'{}'".format(category_value['source']))
 
-            for category_option_key, category_option_value in categories[category_key].items():
+            for category_option_key, category_option_value in category_value['options'].items():
                 cols.append(category_option_key)
-                values.append(category_option_value[category_option_key])
+                values.append("'{}'".format(category_option_value))
 
             sql.append("INSERT INTO category ({}) VALUES ({})".format(
                 ', '.join(cols), ', '.join(values)))
