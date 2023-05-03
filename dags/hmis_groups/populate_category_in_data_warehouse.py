@@ -13,70 +13,6 @@ CH_CATEGORY_TABLE_SCHEMA = 'dags/tmp/ch_sql/categorySchema.sql'
 CATEGORY_METADATA_JSON_FILE = 'dags/tmp/json/categoryMetadata.json'
 CATEGORY_METADATA_SQL_FILE = 'dags/tmp/ch_sql/categoryMetadata.sql'
 
-# category_structure = {
-#         "CategoryComboID": {
-#             "name": "CategoryComboName",
-#             "categories": {
-#                     "categoryID": {
-#                         "name": "CategoryName",
-#                         "previous_name": "PreviousCategoryName",
-#                         "change": "insert",
-#                         "categoryOptions": {
-#                                 "optionID": {
-#                                     "name": "OptionName",
-#                                 },
-#                                 ...
-#                             }
-#                     },
-#                     ...
-#                 }
-#         },
-#         ...
-#     }
-
-
-# def generate_category_structure(ti):
-#     category_structure = {}
-#     pg_hook = PostgresHook(postgres_conn_id='postgres')
-#     pg_df = pg_hook.get_pandas_df('''
-#         select
-#             cc.uid as CategoryComboID, cc.name as CategoryComboName,
-#             dec.uid as DataElementCategoryID, dec.name as DataElementCategoryName,
-#             dec.previous_name as DataElementCategoryPreviousName, dec.change,
-#             deco.uid as DataElementCategoryOptionID, deco.name as DataElementCategoryOptionName
-#         from dataelementcategory as dec
-#         inner join dataelementcategory_categoryoption as decco on dec.uid=decco.category_id
-#         inner join dataelementcategoryoption as deco on decco.categoryoption_id=deco.uid
-#         inner join dataelementcategory_categorycombo as deccc on deccc.dataelementcategory_id=dec.uid
-#         inner join categorycombo as cc on deccc.categorycombo_id =cc.uid;
-#     ''')
-#     for index, row in pg_df.iterrows():
-#         # register the categorycombo if it is not registered
-#         if row[0] not in category_structure:
-#             category_structure[row[0]] = {
-#                 "name": row[1],
-#                 "categories": {}
-#             }
-
-#         if row[2] not in category_structure[row[0]]['categories']:
-#             category_structure[row[0]]['categories'][row[2]] = {
-#                 "name": row[3],
-#                 "previous_name": row[4],
-#                 "change": row[5],
-#                 "categoryOptions": {}
-#             }
-
-#         if row[6] not in category_structure[row[0]]['categories'][row[2]]['categoryOptions']:
-#             category_structure[row[0]]['categories'][row[2]]['categoryOptions'][row[6]] = {
-#                 "name": row[7]
-#             }
-
-#     file_name = "dags/tmp/json/category_structure.json"
-#     with open(file_name, 'w') as file:
-#         file.write(json.dumps(category_structure))
-
-#     ti.xcom_push(key="category_structure_file_name", value="dags/tmp/json/category_structure.json")
-
 
 def generate_category_schema(ti):
     pg_hook = PostgresHook(postgres_conn_id='postgres')
@@ -113,18 +49,24 @@ def generate_category_schema(ti):
         f.write('\n'.join(sql))
 
 
-# Data structure
+# Data structure for category metadata
 # {
 #     "categoryoptioncomboid_1": {
 #         "name": "categoryoptioncomboname",
-#         "categoryid":"categoryoption_id",
-#         "categoryname":"categoryoption_name",
+#         "source": "c1x82kksj"
+#         "options": {
+#               "categoryid":"categoryoption_id",
+#               "categoryname":"categoryoption_name",
+#         }
 #         ...
 #     },
 #     "categoryoptioncomboid_2": {
 #         "name": "categoryoptioncomboname",
-#         "categoryid":"categoryoption_id",
-#         "categoryname":"categoryoption_name",
+#         "source": "c1x82kksj"
+#         "options": {
+#               "categoryid":"categoryoption_id",
+#               "categoryname":"categoryoption_name",
+#         }
 #         ...
 #     }
 # }
@@ -225,8 +167,14 @@ def populate_category_in_data_warehouse():
             sql_file=CATEGORY_METADATA_SQL_FILE
         )
 
+        reset_category_options_in_pgsql = PostgresOperator(
+            task_id='reset_category_options_in_pgsql',
+            postgres_conn_id='postgres',
+            sql="update dataelementcategoryoption set change = '' where change = 'update' or change = 'insert'"
+        )
+
         generate_category_columns_schema >> import_category_schema_into_ch >> reset_category_in_pgsql >> \
             convert_category_metadata_to_json >> convert_category_metadata_in_json_to_sql >> \
-            import_category_metadata_into_clickhouse
+            import_category_metadata_into_clickhouse >> reset_category_options_in_pgsql
 
     return group
