@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 
 from airflow.hooks.postgres_hook import PostgresHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
@@ -125,6 +126,10 @@ def convert_category_metadata_in_json_2_sql(ti):
 
             cols.append('source_id')
             values.append("'{}'".format(category_value['source']))
+
+            cols.append('lastupdated')
+            values.append("'{}'".format(
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             for category_option_key, category_option_value in category_value['options'].items():
                 # remove space in column name
