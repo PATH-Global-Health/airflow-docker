@@ -6,7 +6,7 @@ from typing import List
 from airflow.models.baseoperator import BaseOperator
 from airflow.exceptions import AirflowException
 from airflow.hooks.postgres_hook import PostgresHook
-from airflow.operators.python import PythonOperator
+
 
 class PGSQL2CHInsertOperator(BaseOperator):
     """
@@ -20,14 +20,15 @@ class PGSQL2CHInsertOperator(BaseOperator):
             return "cast('{}', 'DateTime64')".format(value)
         return "'{}'".format(value)
 
-    def __init__(self, postgres_conn_id: str, ch_table_name:str, sql: str, exclude_fields: List[str], output_file: str, output_dir="dags/tmp/ch_sql/data", **kwargs):
+    def __init__(self, postgres_conn_id: str, ch_table_name: str, sql: str, exclude_fields: List[str], output_file: str, output_dir="dags/tmp/ch_sql/data", **kwargs):
         super().__init__(**kwargs)
 
         if not postgres_conn_id:
             raise AirflowException('No valid postgres_conn_id supplied.')
 
         if not ch_table_name:
-            raise AirflowException('No valid table name for ClickHouse "ch_table_name" supplied.')
+            raise AirflowException(
+                'No valid table name for ClickHouse "ch_table_name" supplied.')
 
         if not sql:
             raise AirflowException('No valid sql supplied.')
@@ -53,7 +54,7 @@ class PGSQL2CHInsertOperator(BaseOperator):
         for column in columns:
             if column not in self.exclude_fields:
                 cols.append(column)
-                values.append(self.cast(types[column],row[column]))
+                values.append(self.cast(types[column], row[column]))
 
         return sql.format(self.ch_table_name, ', '.join(cols), ', '.join(values))
 
@@ -65,8 +66,8 @@ class PGSQL2CHInsertOperator(BaseOperator):
         pg_hook = PostgresHook(postgres_conn_id=self.postgres_conn_id)
         pg_df = pg_hook.get_pandas_df(sql=self.sql)
         for index, row in pg_df.iterrows():
-            sql.append( self.generate_insert(pg_df.dtypes, pg_df.columns, row))
-        
+            sql.append(self.generate_insert(pg_df.dtypes, pg_df.columns, row))
+
         # write the sql to file
         with open(os.path.join(self.output_dir, self.output_file), 'w') as f:
             f.write('\n'.join(sql))

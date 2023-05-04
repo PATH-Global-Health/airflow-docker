@@ -5,7 +5,7 @@ from typing import List
 
 from airflow.models.baseoperator import BaseOperator
 from airflow.exceptions import AirflowException
-from airflow.operators.python import PythonOperator
+
 
 class JSON2CHInsertOperator(BaseOperator):
     """
@@ -19,11 +19,12 @@ class JSON2CHInsertOperator(BaseOperator):
             return "cast('{}', 'DateTime64')".format(value)
         return "'{}'".format(value)
 
-    def __init__(self, ch_table_name:str, exclude_fields: List[str], input_file:str, output_file: str, output_dir="dags/tmp/ch_sql", **kwargs):
+    def __init__(self, ch_table_name: str, exclude_fields: List[str], input_file: str, output_file: str, output_dir="dags/tmp/ch_sql", **kwargs):
         super().__init__(**kwargs)
 
         if not ch_table_name:
-            raise AirflowException('No valid table name for ClickHouse "ch_table_name" supplied.')
+            raise AirflowException(
+                'No valid table name for ClickHouse "ch_table_name" supplied.')
 
         if not output_file:
             raise AirflowException('No valid output file name supplied.')
@@ -48,7 +49,7 @@ class JSON2CHInsertOperator(BaseOperator):
         for column, ou in row.items():
             if column not in self.exclude_fields:
                 cols.append(column)
-                values.append(self.cast(ou['type'],ou['value']))
+                values.append(self.cast(ou['type'], ou['value']))
 
         return sql.format(self.ch_table_name, ', '.join(cols), ', '.join(values))
 
@@ -57,8 +58,8 @@ class JSON2CHInsertOperator(BaseOperator):
         with open(os.path.join(self.input_file), 'r', encoding="utf-8") as f:
             ous = json.load(f)
             for ou_uid, ou_row in ous.items():
-                sql.append( self.generate_insert(ou_row))
-        
+                sql.append(self.generate_insert(ou_row))
+
         # write the sql to file
         with open(os.path.join(self.output_dir, self.output_file), 'w') as f:
             f.write('\n'.join(sql))

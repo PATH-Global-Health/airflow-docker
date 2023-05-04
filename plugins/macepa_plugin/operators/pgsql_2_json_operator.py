@@ -6,7 +6,7 @@ from typing import List
 from airflow.models.baseoperator import BaseOperator
 from airflow.exceptions import AirflowException
 from airflow.hooks.postgres_hook import PostgresHook
-from airflow.operators.python import PythonOperator
+
 
 class PGSQL2JSONOperator(BaseOperator):
     """
@@ -64,17 +64,18 @@ class PGSQL2JSONOperator(BaseOperator):
         self.output_dir = output_dir
 
     def change_row_to_json(self, types, columns, row):
-       
+
         cols = {}
         pks = []
 
         for column in columns:
             if column in self.unique_keys:
                 pks.append(row[column])
-            cols[column] = {"type":str(types[column]), "value":str(row[column])}
+            cols[column] = {"type": str(
+                types[column]), "value": str(row[column])}
 
         return '-'.join(pks), cols
-        
+
     def execute(self, context):
         data = {}
 
@@ -83,7 +84,7 @@ class PGSQL2JSONOperator(BaseOperator):
         for index, row in pg_df.iterrows():
             d = self.change_row_to_json(pg_df.dtypes, pg_df.columns, row)
             data[d[0]] = d[1]
-            
+
         # write the dict to file
         with open(os.path.join(self.output_dir, self.output_file), 'w') as f:
             f.write(json.dumps(data))
