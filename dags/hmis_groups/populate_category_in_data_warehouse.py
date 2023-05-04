@@ -7,53 +7,11 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 
-from macepa_plugin import ClickHouseMultiSqlOperator
+from macepa_plugin import ClickHouseMultiSqlOperator, GenerateCHTableSchema
 
-CH_CATEGORY_TABLE = 'category'
 CH_CATEGORY_TABLE_SCHEMA = 'dags/tmp/ch_sql/categorySchema.sql'
 CATEGORY_METADATA_JSON_FILE = 'dags/tmp/json/categoryMetadata.json'
 CATEGORY_METADATA_SQL_FILE = 'dags/tmp/ch_sql/categoryMetadata.sql'
-
-
-def generate_category_schema(ti):
-    pg_hook = PostgresHook(postgres_conn_id='postgres')
-    pg_df = pg_hook.get_pandas_df("""
-        select uid, name, previous_name, change 
-        from dataelementcategory 
-        where change = 'insert' or change = 'update';
-        """)
-
-    sql = []
-    previous_field_name = ""
-
-    # iterate over categories under category combo and make the ids and names as columns in category table of clickhouse
-    # row[0] - uid
-    # row[1] - name
-    # row[2] - previous_name
-    # row[3] - change
-    for index, row in pg_df.iterrows():
-        if row[3] == "insert":
-            if not previous_field_name:
-                sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER lastupdated;'.format(
-                    CH_CATEGORY_TABLE, row[0]))
-                sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER {};'.format(
-                    CH_CATEGORY_TABLE, row[1].replace(" ", ""), row[0]))
-            else:
-                sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER {};'.format(
-                    CH_CATEGORY_TABLE, row[0], previous_field_name))
-                sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER {};'.format(
-                    CH_CATEGORY_TABLE, row[1].replace(" ", ""), row[0]))
-            # remove space in column name
-            previous_field_name = row[1].replace(" ", "")
-        elif row[3] == "update":
-            # Users are only allowed to change the names of the categories not their IDs in DHIS2.
-            # This is the reason to rename the columns related with name without touching the IDs.
-            sql.append('ALTER TABLE {} RENAME COLUMN IF EXISTS {} to {}'.format(
-                CH_CATEGORY_TABLE, category['previous_name'].replace(" ", ""), category['name'].replace(" ", "")))
-
-    with open(os.path.join(CH_CATEGORY_TABLE_SCHEMA), 'w') as f:
-        f.write('\n'.join(sql))
-
 
 # Data structure for category metadata
 # {
@@ -76,6 +34,7 @@ def generate_category_schema(ti):
 #         ...
 #     }
 # }
+
 
 def convert_category_metadata(ti):
     pg_hook = PostgresHook(postgres_conn_id='postgres')
@@ -146,9 +105,12 @@ def convert_category_metadata_in_json_2_sql(ti):
 def populate_category_in_data_warehouse():
     with TaskGroup('populate_category_in_data_warehouse', tooltip='Populate the category table in the data warehouse') as group:
 
-        generate_category_columns_schema = PythonOperator(
+        generate_category_columns_schema = GenerateCHTableSchema(
             task_id='generate_category_columns_schema',
-            python_callable=generate_category_schema
+            ch_table_name='category',
+            postgres_conn_id='postgres',
+            pg_table_name='dataelementcategory',
+            output_file='categorySchema.sql'
         )
 
         import_category_schema_into_ch = ClickHouseMultiSqlOperator(
