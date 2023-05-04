@@ -409,6 +409,7 @@ CREATE TABLE IF NOT EXISTS dataelementgroup (
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
+    previous_name CHARACTER VARYING(230),
     formname CHARACTER VARYING(230),
     aggregationtype CHARACTER VARYING (50),
     change change_status default 'insert', 
@@ -425,7 +426,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.formname <> OLD.formname OR 
         NEW.aggregationtype <> OLD.aggregationtype THEN
-		 UPDATE dataelementgroup SET change = 'update'
+		 UPDATE dataelementgroup SET change = 'update', previous_name = OLD.name
          WHERE uid = NEW.uid AND source_id =  NEW.source_id;
 	END IF;
 

@@ -23,6 +23,7 @@ from hmis_groups.process_data import process_data
 from hmis_groups.populate_data_source_in_data_warehouse import populate_data_source_in_data_warehouse
 from hmis_groups.populate_orgunit_in_data_warehouse import populate_orgunit_in_data_warehouse
 from hmis_groups.populate_category_in_data_warehouse import populate_category_in_data_warehouse
+from hmis_groups.populate_dataelement_in_data_warehouse import populate_dataelement_in_data_warehouse
 
 default_args = {
     'owner': 'airflow',
@@ -66,7 +67,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         task_id='clean_tmp_dir',
         python_callable=_clean_tmp_dir,
         op_kwargs={"main_dir": 'dags/tmp', "sub_dir": [
-            'csv','ch_sql', 'json', 'pg_sql', 'csv/data', 'ch_sql/data', 'json/data', 'pg_sql/data']},
+            'csv', 'ch_sql', 'json', 'pg_sql', 'csv/data', 'ch_sql/data', 'json/data', 'pg_sql/data']},
     )
 
     # Tasks related to staging database
@@ -112,6 +113,7 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
     populate_hmis_data_source_in_data_warehouse = populate_data_source_in_data_warehouse()
     populate_hmis_orgunit_in_data_warehouse = populate_orgunit_in_data_warehouse()
     populate_hmis_category_in_data_warehouse = populate_category_in_data_warehouse()
+    populate_hmis_dataelement_in_data_warehouse = populate_dataelement_in_data_warehouse()
 
     # Tasks related to the data warehouse
 
@@ -134,5 +136,6 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
         ] >> import_category_category_combos >> import_category_category_options >> \
         [process_hmis_category_option_combos_metadata,
             process_hmis_data_elements_metadata] >> process_hmis_data >> create_dw_tables >> \
-            populate_hmis_data_source_in_data_warehouse >> [populate_hmis_orgunit_in_data_warehouse,
-                populate_hmis_category_in_data_warehouse]
+        populate_hmis_data_source_in_data_warehouse >> \
+        [populate_hmis_orgunit_in_data_warehouse,
+         populate_hmis_category_in_data_warehouse, populate_hmis_dataelement_in_data_warehouse]
