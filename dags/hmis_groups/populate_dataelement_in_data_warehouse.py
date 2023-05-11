@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 
 from airflow.hooks.postgres_hook import PostgresHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
@@ -60,6 +61,44 @@ def convert_dataelement_metadata(ti):
         file.write(json.dumps(data))
 
 
+def convert_dataelement_metadata_in_json_2_sql(ti):
+
+    with open(DATAELEMENT_METADATA_JSON_FILE, 'r', encoding="utf-8") as f:
+        dataelements = json.load(f)
+        sql = []
+
+        for de_key, de_value in dataelements.items():
+            values = []
+            cols = []
+
+            cols.append('uid')
+            values.append("'{}'".format(de_key))
+
+            cols.append('name')
+            values.append("'{}'".format(de_value['name']))
+
+            cols.append('source_id')
+            values.append("'{}'".format(de_value['source']))
+
+            cols.append('lastupdated')
+            values.append("'{}'".format(
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
+            for degroup_key, degroup_value in de_value['groups'].items():
+                # remove space in column name
+                cols.append(degroup_key.replace(' ', ''))
+                values.append("'t'")
+
+                cols.append(degroup_value.replace(' ', ''))
+                values.append("'t'")
+
+            sql.append("INSERT INTO dataelement ({}) VALUES ({})".format(
+                ', '.join(cols), ', '.join(values)))
+
+    with open(DATAELEMENT_METADATA_SQL_FILE, 'w') as f:
+        f.write('\n'.join(sql))
+
+
 def populate_dataelement_in_data_warehouse():
     with TaskGroup('populate_data_element_in_data_warehouse', tooltip='Populate the dataelement table in the data warehouse') as group:
         generate_dataelement_columns_schema = GenerateCHTableSchema(
@@ -88,7 +127,12 @@ def populate_dataelement_in_data_warehouse():
             python_callable=convert_dataelement_metadata
         )
 
+        convert_dataelement_metadata_in_json_to_sql = PythonOperator(
+            task_id='convert_dataelement_metadata_in_json_to_sql',
+            python_callable=convert_dataelement_metadata_in_json_2_sql
+        )
+
         generate_dataelement_columns_schema >> import_dataelement_schema_into_ch >> reset_dataelement_in_pgsql >> \
-            convert_dataelement_metadata_to_json
+            convert_dataelement_metadata_to_json >> convert_dataelement_metadata_in_json_to_sql
 
     return group
