@@ -24,7 +24,6 @@ DATAELEMENT_METADATA_SQL_FILE = 'dags/tmp/ch_sql/dataElementMetadata.sql'
 #               "group_uid_1":"group name 1",
 #               "group_uid_2":"group name 2",
 #         }
-#         ...
 #     },
 #     "dataelement_uid_2": {
 #         "name": "dataelement name",
@@ -33,7 +32,6 @@ DATAELEMENT_METADATA_SQL_FILE = 'dags/tmp/ch_sql/dataElementMetadata.sql'
 #               "group_uid_1":"group name 1",
 #               "group_uid_2":"group name 2",
 #         }
-#         ...
 #     }
 # }
 
@@ -132,7 +130,21 @@ def populate_dataelement_in_data_warehouse():
             python_callable=convert_dataelement_metadata_in_json_2_sql
         )
 
+        import_dataelement_metadata_into_clickhouse = ClickHouseMultiSqlOperator(
+            task_id='import_dataelement_metadata_into_clickhouse',
+            database='core',
+            clickhouse_conn_id='clickhouse',
+            sql_file=DATAELEMENT_METADATA_SQL_FILE
+        )
+
+        reset_dataelement_in_pgsql = PostgresOperator(
+            task_id='reset_dataelement_in_pgsql',
+            postgres_conn_id='postgres',
+            sql="update dataelement set change = '' where change = 'update' or change = 'insert'"
+        )
+
         generate_dataelement_columns_schema >> import_dataelement_schema_into_ch >> reset_dataelement_in_pgsql >> \
-            convert_dataelement_metadata_to_json >> convert_dataelement_metadata_in_json_to_sql
+            convert_dataelement_metadata_to_json >> convert_dataelement_metadata_in_json_to_sql >> \
+            import_dataelement_metadata_into_clickhouse >> reset_dataelement_options_in_pgsql
 
     return group
