@@ -114,8 +114,8 @@ def populate_dataelement_in_data_warehouse():
             sql_file=CH_DATAELEMENT_TABLE_SCHEMA
         )
 
-        reset_dataelement_in_pgsql = PostgresOperator(
-            task_id='reset_dataelement_in_pgsql',
+        reset_dataelementgroup_in_pgsql = PostgresOperator(
+            task_id='reset_dataelementgroup_in_pgsql',
             postgres_conn_id='postgres',
             sql="update dataelementgroup set change = '' where change = 'update' or change = 'insert'"
         )
@@ -143,8 +143,8 @@ def populate_dataelement_in_data_warehouse():
             sql="update dataelement set change = '' where change = 'update' or change = 'insert'"
         )
 
-        generate_dataelement_columns_schema >> import_dataelement_schema_into_ch >> reset_dataelement_in_pgsql >> \
+        generate_dataelement_columns_schema >> import_dataelement_schema_into_ch >> reset_dataelementgroup_in_pgsql >> \
             convert_dataelement_metadata_to_json >> convert_dataelement_metadata_in_json_to_sql >> \
-            import_dataelement_metadata_into_clickhouse >> reset_dataelement_options_in_pgsql
+            import_dataelement_metadata_into_clickhouse >> reset_dataelement_in_pgsql
 
     return group
