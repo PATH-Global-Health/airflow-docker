@@ -126,16 +126,11 @@ with DAG('HMIS-DHIS2',  default_args=default_args,
 
     # Tasks relationship
     clean_tmp_dir >> create_staging_tables >> populate_data_source_tables >> set_data_source >> \
-        [
-            process_hmis_orgunit_level_metadata,
-            process_hmis_org_units_metadata,
-            process_hmis_categories_metadata,
-            process_hmis_category_combos_metadata,
-            process_hmis_category_options_metadata,
-            process_hmis_data_element_groups_metadata
-        ] >> import_category_category_combos >> import_category_category_options >> \
-        [process_hmis_category_option_combos_metadata,
-            process_hmis_data_elements_metadata] >> process_hmis_data >> create_dw_tables >> \
-        populate_hmis_data_source_in_data_warehouse >> \
-        [populate_hmis_orgunit_in_data_warehouse,
-         populate_hmis_category_in_data_warehouse, populate_hmis_dataelement_in_data_warehouse]
+        process_hmis_orgunit_level_metadata >> process_hmis_org_units_metadata >> \
+        process_hmis_categories_metadata >> process_hmis_category_combos_metadata >> \
+        process_hmis_category_options_metadata >> process_hmis_data_element_groups_metadata >> \
+        import_category_category_combos >> import_category_category_options >> \
+        process_hmis_category_option_combos_metadata >> process_hmis_data_elements_metadata >> \
+        process_hmis_data >> create_dw_tables >> populate_hmis_data_source_in_data_warehouse >> \
+        populate_hmis_orgunit_in_data_warehouse >> populate_hmis_category_in_data_warehouse >> \
+        populate_hmis_dataelement_in_data_warehouse
