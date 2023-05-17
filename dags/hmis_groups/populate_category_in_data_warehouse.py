@@ -39,7 +39,7 @@ CATEGORY_METADATA_SQL_FILE = 'dags/tmp/ch_sql/categoryMetadata.sql'
 def convert_category_metadata(ti):
     pg_hook = PostgresHook(postgres_conn_id='postgres')
     pg_df = pg_hook.get_pandas_df("""
-       select coc.uid, coc.name,de_c.uid, de_c.name, deco.uid, deco.name, deco.source_id
+       select coc.uid, coc.name,de_c.uid, de_c.name, deco.uid, deco.name, deco.sourceid
        from categoryoptioncombo as coc 
        inner join categoryoptioncombo_categoryoptions as cocco on coc.uid = cocco.category_option_combo_id 
        inner join dataelementcategoryoption as deco on cocco.category_option_id = deco.uid
@@ -83,7 +83,7 @@ def convert_category_metadata_in_json_2_sql(ti):
             cols.append('categoryoptioncomboname')
             values.append("'{}'".format(category_value['name']))
 
-            cols.append('source_id')
+            cols.append('sourceid')
             values.append("'{}'".format(category_value['source']))
 
             cols.append('lastupdated')

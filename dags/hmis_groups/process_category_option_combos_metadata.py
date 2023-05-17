@@ -29,7 +29,7 @@ def process_category_option_combos_metadata():
                 }
             },
             primary_keys=[
-                'uid', 'source_id'
+                'uid', 'sourceid'
             ],
             output_sql_filename="categoryOptionCombos.sql",
             input_json_file="dags/tmp/json/categoryOptionCombos.json"
@@ -52,7 +52,7 @@ def process_category_option_combos_metadata():
                 'id': {'column': 'category_option_id', 'type': 'str'},
             },
             primary_keys=[
-                'category_option_combo_id', 'category_option_id', 'source_id'
+                'category_option_combo_id', 'category_option_id', 'sourceid'
             ],
             output_sql_filename="categoryOptionCombos_Categoryoptions.sql",
             input_json_file="dags/tmp/json/categoryOptionCombos.json"
@@ -66,6 +66,6 @@ def process_category_option_combos_metadata():
 
         extract_category_option_combos >> change_json_2_sql_category_option_combos >> \
             import_category_option_combos >> change_json_2_sql_categoryoptioncombo_categoryoptions >> \
-                import_categoryoptioncombos_categoryoptions
+            import_categoryoptioncombos_categoryoptions
 
     return group

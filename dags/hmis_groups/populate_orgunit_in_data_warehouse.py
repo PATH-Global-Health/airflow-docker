@@ -20,6 +20,7 @@ ORG_UNIT_DIR_CSV = "dags/tmp/csv"
 ORG_UNIT_HIERARCHY_CSV = "orgunits.csv"
 DAG_FULL_PATH = '/Users/belendia/Documents/Projects/AirflowProj/docker-airflow'
 
+
 def generate_orgunit_schema(ti):
     levels = ti.xcom_pull(key='get_org_unit_levels')
     sql = []
@@ -27,16 +28,21 @@ def generate_orgunit_schema(ti):
     for index, level in enumerate(levels):
         if level[4] == "insert":
             if index == 0:
-                sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER lastupdated;'.format(CH_ORGUNIT_TABLE, level[0]))
+                sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER lastupdated;'.format(
+                    CH_ORGUNIT_TABLE, level[0]))
             else:
-                 sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER {};'.format(CH_ORGUNIT_TABLE, level[0], previous_field_name))
-            sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER {};'.format(CH_ORGUNIT_TABLE, level[1].replace(" ", ""), level[0]))
+                sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER {};'.format(
+                    CH_ORGUNIT_TABLE, level[0], previous_field_name))
+            sql.append('ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} String AFTER {};'.format(
+                CH_ORGUNIT_TABLE, level[1].replace(" ", ""), level[0]))
             previous_field_name = level[1].replace(" ", "")
         elif level[4] == "update":
-            sql.append('ALTER TABLE {} RENAME COLUMN IF EXISTS {} to {}'.format(CH_ORGUNIT_TABLE, level[2].replace(" ", ""), level[1].replace(" ", "")))
+            sql.append('ALTER TABLE {} RENAME COLUMN IF EXISTS {} to {}'.format(
+                CH_ORGUNIT_TABLE, level[2].replace(" ", ""), level[1].replace(" ", "")))
 
     with open(os.path.join(CH_ORGUNIT_TABLE_SCHEMA), 'w') as f:
-            f.write('\n'.join(sql))
+        f.write('\n'.join(sql))
+
 
 def generate_org_unit_hierarchy_in_csv(ti):
     levels = ti.xcom_pull(key='get_org_unit_levels_id_name')
@@ -59,7 +65,7 @@ def generate_org_unit_hierarchy_in_csv(ti):
     # read all the org units to transform the org unit hierarchy in the form of id to names and ids
     with open(os.path.join(ORG_UNIT_DIR_JSON, ORG_UNIT_JSON), 'r', encoding="utf-8") as f:
         ous = json.load(f)
-        
+
         org_units_hierarchy = {}
         # The "path" column is stores org unit hierarchy ids like
         # "/JWOFOcZt7av/FzSzYdX25ch/LtgDnjaiH9b/V1Ora4NbSEE/Nimdjs72wnV"
@@ -73,39 +79,44 @@ def generate_org_unit_hierarchy_in_csv(ti):
                 for index, parent_uid in enumerate(parent_uids):
                     if parent_uid.strip().__len__() > 0:
                         if index - 1 in ou_levels:
-                            hierarchy[ou_levels[index - 1]['uid']]= {"type": "object", "value": parent_uid}
-                            hierarchy[ou_levels[index - 1]['name']]= {"type": "object", "value": ous[parent_uid]["name"]["value"]}
-     
+                            hierarchy[ou_levels[index - 1]['uid']
+                                      ] = {"type": "object", "value": parent_uid}
+                            hierarchy[ou_levels[index - 1]['name']] = {
+                                "type": "object", "value": ous[parent_uid]["name"]["value"]}
+
                 org_units_hierarchy[uid] = hierarchy
-        
+
         # insert the hierarchy information into the orgunits json
         for uid, ou_partial_row in org_units_hierarchy.items():
             if uid in ous:
                 ous[uid].update(ou_partial_row)
-                #add at what level the org unit is
-                ous[uid].update({"level": {"type": "int64", "value": ous[uid]["path"]["value"].count('/')}})
+                # add at what level the org unit is
+                ous[uid].update(
+                    {"level": {"type": "int64", "value": ous[uid]["path"]["value"].count('/')}})
 
     # rearrange the data to be imported into pandas
     # [{"uid": "abcdef", "name: Ethiopia"}, {"uid":"ab1235", ...}]
-    dataset=[]
+    dataset = []
 
-    exclude_fields=['change', 'path', 'parentid']
+    exclude_fields = ['change', 'path', 'parentid']
     for uid, ou_row in ous.items():
         row = {}
         for col_name, ou_val in ou_row.items():
             if col_name not in exclude_fields:
                 row[col_name] = ou_val['value']
         dataset.append(row)
-    
+
     # Store the org units dataset as csv file
     df = pd.DataFrame(dataset)
     # check if the data frame has a column named 'lastupdated'
     if 'lastupdated' in df.columns:
         # change the data type of lastupdated column to datetime64
-        df['lastupdated']=df['lastupdated'].astype('datetime64')
+        df['lastupdated'] = df['lastupdated'].astype('datetime64')
         # then remove the microseconds from lastupdated column. ClickHouse doesn't support microseconds.
-        df['lastupdated'] = df['lastupdated'].apply(lambda x: x.replace(microsecond=0))
-    df.to_csv(os.path.join(ORG_UNIT_DIR_CSV, ORG_UNIT_HIERARCHY_CSV), index=False)
+        df['lastupdated'] = df['lastupdated'].apply(
+            lambda x: x.replace(microsecond=0))
+    df.to_csv(os.path.join(ORG_UNIT_DIR_CSV,
+              ORG_UNIT_HIERARCHY_CSV), index=False)
 
 
 def populate_orgunit_in_data_warehouse():
@@ -143,7 +154,7 @@ def populate_orgunit_in_data_warehouse():
         export_orgunit_from_pgsql_2_json = PGSQL2JSONOperator(
             task_id='export_orgunit_from_pgsql_2_json',
             postgres_conn_id='postgres',
-            sql="select uid, name, parentid, path, source_id, change, lastupdated from organisationunit where change = 'insert' or change ='update'",
+            sql="select uid, name, parentid, path, sourceid, change, lastupdated from organisationunit where change = 'insert' or change ='update'",
             unique_keys=['uid'],
             output_file=ORG_UNIT_JSON
         )
@@ -193,7 +204,8 @@ def populate_orgunit_in_data_warehouse():
             database='core',
             clickhouse_conn_id='clickhouse',
             table_name='orgunit',
-            schema={'level': int, 'lastupdated': lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')},
+            schema={'level': int, 'lastupdated': lambda x: datetime.strptime(
+                x, '%Y-%m-%d %H:%M:%S')},
             input_file=os.path.join(ORG_UNIT_DIR_CSV, ORG_UNIT_HIERARCHY_CSV)
         )
 
@@ -205,7 +217,6 @@ def populate_orgunit_in_data_warehouse():
 
         get_org_unit_levels >> generate_orgunit_columns_schema >> import_orgunit_schema_into_ch >> \
             reset_orgunit_level_in_pgsql >> [export_orgunit_from_pgsql_2_json, get_org_unit_levels_ids_and_names] >> \
-                generate_and_store_org_unit_hierarchy_in_csv >> import_orgunit_into_ch >> reset_orgunit_in_pgsql
+            generate_and_store_org_unit_hierarchy_in_csv >> import_orgunit_into_ch >> reset_orgunit_in_pgsql
 
     return group
-

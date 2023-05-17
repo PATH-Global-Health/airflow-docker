@@ -59,9 +59,9 @@ CREATE TABLE IF NOT EXISTS organisationunit (
     featuretype character varying(255),
     coordinates text,
     change change_status default 'insert',
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_organisationunit_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid),
+    CONSTRAINT fk_organisationunit_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_organisationunit_changes()
@@ -73,7 +73,7 @@ BEGIN
 	IF NEW.name <> OLD.name OR NEW.shortname <> OLD.shortname OR 
         NEW.parentid <> OLD.parentid THEN
 		 UPDATE organisationunit SET change = 'update'
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -97,8 +97,8 @@ CREATE TABLE IF NOT EXISTS orgunitlevel (
     previous_name CHARACTER VARYING(230),
     level integer NOT NULL,
     change change_status default 'insert',
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid)
 );
 
 CREATE OR REPLACE FUNCTION track_orgunitlevel_changes()
@@ -109,7 +109,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.level <> OLD.level THEN
 		 UPDATE orgunitlevel SET change = 'update', previous_name = OLD.name
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -141,9 +141,9 @@ CREATE TABLE IF NOT EXISTS optionset (
     valuetype CHARACTER VARYING(50) NOT NULL,
     version integer,
     change change_status default 'insert',
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_optionset_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid),
+    CONSTRAINT fk_optionset_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_optionset_changes()
@@ -154,7 +154,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
 		 UPDATE optionset SET change = 'update'
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -176,9 +176,9 @@ CREATE TABLE IF NOT EXISTS categorycombo (
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     name CHARACTER VARYING(230) NOT NULL,
     change change_status default 'insert',
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_categorycombo_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid),
+    CONSTRAINT fk_categorycombo_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_categorycombo_changes()
@@ -189,7 +189,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
 		 UPDATE categorycombo SET change = 'update'
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -213,9 +213,9 @@ CREATE TABLE IF NOT EXISTS  dataelementcategory (
     previous_name CHARACTER VARYING(230),
     datadimension boolean,
     change change_status default 'insert',
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_dataelementcategory_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid),
+    CONSTRAINT fk_dataelementcategory_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_dataelementcategory_changes()
@@ -226,7 +226,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.datadimension <> OLD.datadimension THEN
 		 UPDATE dataelementcategory SET change = 'update', previous_name = OLD.name
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -249,9 +249,9 @@ CREATE TABLE IF NOT EXISTS dataelementcategoryoption (
     name CHARACTER VARYING(230) NOT NULL,
     shortname CHARACTER VARYING(50),
     change change_status default 'insert', 
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_dataelementcategoryoption_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid),
+    CONSTRAINT fk_dataelementcategoryoption_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_dataelementcategoryoption_changes()
@@ -262,7 +262,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name OR NEW.shortname <> OLD.shortname THEN
 		 UPDATE dataelementcategoryoption SET change = 'update'
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -284,11 +284,11 @@ CREATE TABLE IF NOT EXISTS dataelementcategory_categoryoption (
     category_id CHARACTER VARYING(11),
     categoryoption_id CHARACTER VARYING(11),
     change change_status default 'insert', 
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (category_id, categoryoption_id, source_id),
-    CONSTRAINT fk_dataelementcategory_categoryoption_dataelementcategory FOREIGN KEY(category_id, source_id) REFERENCES dataelementcategory(uid, source_id),
-    CONSTRAINT fk_dataelementcategory_categoryoption_dataelementcategoryoption FOREIGN KEY(categoryoption_id, source_id) REFERENCES dataelementcategoryoption(uid, source_id),
-    CONSTRAINT fk_dataelementcategory_categoryoption_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (category_id, categoryoption_id, sourceid),
+    CONSTRAINT fk_dataelementcategory_categoryoption_dataelementcategory FOREIGN KEY(category_id, sourceid) REFERENCES dataelementcategory(uid, sourceid),
+    CONSTRAINT fk_dataelementcategory_categoryoption_dataelementcategoryoption FOREIGN KEY(categoryoption_id, sourceid) REFERENCES dataelementcategoryoption(uid, sourceid),
+    CONSTRAINT fk_dataelementcategory_categoryoption_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 -- DATA ELEMENT CATEGORY - CATEGORY COMBO
@@ -299,11 +299,11 @@ CREATE TABLE IF NOT EXISTS dataelementcategory_categorycombo (
     categorycombo_id CHARACTER VARYING(11),
     dataelementcategory_id CHARACTER VARYING(11),
     change change_status default 'insert', 
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (categorycombo_id, dataelementcategory_id, source_id),
-    CONSTRAINT fk_dataelementcategorycombo_categorycombo FOREIGN KEY(categorycombo_id, source_id) REFERENCES categorycombo(uid, source_id),
-    CONSTRAINT fk_dataelementcategorycombo_dataelementcategory FOREIGN KEY(dataelementcategory_id, source_id) REFERENCES dataelementcategory(uid, source_id),
-    CONSTRAINT fk_dataelementcategory_categorycombo_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (categorycombo_id, dataelementcategory_id, sourceid),
+    CONSTRAINT fk_dataelementcategorycombo_categorycombo FOREIGN KEY(categorycombo_id, sourceid) REFERENCES categorycombo(uid, sourceid),
+    CONSTRAINT fk_dataelementcategorycombo_dataelementcategory FOREIGN KEY(dataelementcategory_id, sourceid) REFERENCES dataelementcategory(uid, sourceid),
+    CONSTRAINT fk_dataelementcategory_categorycombo_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 
@@ -316,10 +316,10 @@ CREATE TABLE IF NOT EXISTS categoryoptioncombo (
     lastupdated TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     categorycombo_id CHARACTER VARYING(11),
     change change_status default 'insert', 
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_categoryoptioncombo_categorycombo FOREIGN KEY(categorycombo_id, source_id) REFERENCES categorycombo(uid, source_id),
-    CONSTRAINT fk_categoryoptioncombo_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid),
+    CONSTRAINT fk_categoryoptioncombo_categorycombo FOREIGN KEY(categorycombo_id, sourceid) REFERENCES categorycombo(uid, sourceid),
+    CONSTRAINT fk_categoryoptioncombo_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_categoryoptioncombo_changes()
@@ -330,7 +330,7 @@ $$
 BEGIN
 	IF NEW.name <> OLD.name THEN
 		 UPDATE categoryoptioncombo SET change = 'update'
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -349,11 +349,11 @@ CREATE OR REPLACE TRIGGER categoryoptioncombo_changes_trigger
 CREATE TABLE IF NOT EXISTS categoryoptioncombo_categoryoptions (
     category_option_combo_id CHARACTER VARYING(11),
     category_option_id CHARACTER VARYING(11),
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (category_option_combo_id, category_option_id, source_id),
-    CONSTRAINT fk_categoryoptioncombo_categoryoptions_categoryoptioncombo FOREIGN KEY(category_option_combo_id, source_id) REFERENCES categoryoptioncombo(uid, source_id),
-    CONSTRAINT fk_categoryoptioncombo_categoryoptions_dataelementcategoryoption FOREIGN KEY(category_option_id, source_id) REFERENCES dataelementcategoryoption(uid, source_id),
-    CONSTRAINT fk_categoryoptioncombo_categoryoptions_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (category_option_combo_id, category_option_id, sourceid),
+    CONSTRAINT fk_categoryoptioncombo_categoryoptions_categoryoptioncombo FOREIGN KEY(category_option_combo_id, sourceid) REFERENCES categoryoptioncombo(uid, sourceid),
+    CONSTRAINT fk_categoryoptioncombo_categoryoptions_dataelementcategoryoption FOREIGN KEY(category_option_id, sourceid) REFERENCES dataelementcategoryoption(uid, sourceid),
+    CONSTRAINT fk_categoryoptioncombo_categoryoptions_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 -- DATA ELEMENT
@@ -372,11 +372,11 @@ CREATE TABLE IF NOT EXISTS dataelement (
     url CHARACTER VARYING(255),
     optionsetid CHARACTER VARYING(11),
     change change_status default 'insert', 
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_dataelement_optionset FOREIGN KEY(optionsetid, source_id) REFERENCES optionset(uid, source_id),
-    CONSTRAINT fk_dataelement_categorycombo FOREIGN KEY(categorycomboid, source_id) REFERENCES categorycombo(uid, source_id),
-    CONSTRAINT fk_dataelement_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid),
+    CONSTRAINT fk_dataelement_optionset FOREIGN KEY(optionsetid, sourceid) REFERENCES optionset(uid, sourceid),
+    CONSTRAINT fk_dataelement_categorycombo FOREIGN KEY(categorycomboid, sourceid) REFERENCES categorycombo(uid, sourceid),
+    CONSTRAINT fk_dataelement_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_dataelement_changes()
@@ -389,7 +389,7 @@ BEGIN
         NEW.formname <> OLD.formname OR NEW.domaintype <> OLD.domaintype OR 
         NEW.aggregationtype <> OLD.aggregationtype OR NEW.categorycomboid <> OLD.categorycomboid THEN
 		 UPDATE dataelement SET change = 'update'
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -413,9 +413,9 @@ CREATE TABLE IF NOT EXISTS dataelementgroup (
     formname CHARACTER VARYING(230),
     aggregationtype CHARACTER VARYING (50),
     change change_status default 'insert', 
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (uid, source_id),
-    CONSTRAINT fk_dataelementgroup_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (uid, sourceid),
+    CONSTRAINT fk_dataelementgroup_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_dataelementgroup_changes()
@@ -427,7 +427,7 @@ BEGIN
 	IF NEW.name <> OLD.name OR NEW.formname <> OLD.formname OR 
         NEW.aggregationtype <> OLD.aggregationtype THEN
 		 UPDATE dataelementgroup SET change = 'update', previous_name = OLD.name
-         WHERE uid = NEW.uid AND source_id =  NEW.source_id;
+         WHERE uid = NEW.uid AND sourceid =  NEW.sourceid;
 	END IF;
 
 	RETURN NEW;
@@ -449,11 +449,11 @@ CREATE TABLE IF NOT EXISTS dataelement_dataelementgroup (
     dataelement_id CHARACTER VARYING(11),
     group_id CHARACTER VARYING(11),
     change change_status default 'insert', 
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (dataelement_id, group_id, source_id),
-    CONSTRAINT fk_dataelement_dataelementgroup_dataelement FOREIGN KEY(dataelement_id, source_id) REFERENCES dataelement(uid, source_id),
-    CONSTRAINT fk_dataelement_dataelementgroup_dataelementgroup FOREIGN KEY(group_id, source_id) REFERENCES dataelementgroup(uid, source_id),
-    CONSTRAINT fk_dataelement_dataelementgroup_data_source FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (dataelement_id, group_id, sourceid),
+    CONSTRAINT fk_dataelement_dataelementgroup_dataelement FOREIGN KEY(dataelement_id, sourceid) REFERENCES dataelement(uid, sourceid),
+    CONSTRAINT fk_dataelement_dataelementgroup_dataelementgroup FOREIGN KEY(group_id, sourceid) REFERENCES dataelementgroup(uid, sourceid),
+    CONSTRAINT fk_dataelement_dataelementgroup_data_source FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 -- DATA VALUE
@@ -470,13 +470,13 @@ CREATE TABLE IF NOT EXISTS datavalue (
     deleted boolean,
     storedby CHARACTER VARYING(230),
     change change_status default 'insert', 
-    source_id CHARACTER VARYING(50),
-    PRIMARY KEY (dataelementid, period, organisationunitid, categoryoptioncomboid, attributeoptioncomboid, source_id),
-    CONSTRAINT fk_dataelement_datavalue FOREIGN KEY(dataelementid, source_id) REFERENCES dataelement(uid, source_id),
-    CONSTRAINT fk_organisationunit_datavalue FOREIGN KEY(organisationunitid, source_id) REFERENCES organisationunit(uid, source_id),
-    CONSTRAINT fk_categoryoptioncombo_datavalue FOREIGN KEY(categoryoptioncomboid, source_id) REFERENCES categoryoptioncombo(uid, source_id),
-    CONSTRAINT fk_categoryoptioncombo_datavalue_2 FOREIGN KEY(attributeoptioncomboid, source_id) REFERENCES categoryoptioncombo(uid, source_id),
-    CONSTRAINT fk_source_datavalue FOREIGN KEY(source_id) REFERENCES data_source(id)
+    sourceid CHARACTER VARYING(50),
+    PRIMARY KEY (dataelementid, period, organisationunitid, categoryoptioncomboid, attributeoptioncomboid, sourceid),
+    CONSTRAINT fk_dataelement_datavalue FOREIGN KEY(dataelementid, sourceid) REFERENCES dataelement(uid, sourceid),
+    CONSTRAINT fk_organisationunit_datavalue FOREIGN KEY(organisationunitid, sourceid) REFERENCES organisationunit(uid, sourceid),
+    CONSTRAINT fk_categoryoptioncombo_datavalue FOREIGN KEY(categoryoptioncomboid, sourceid) REFERENCES categoryoptioncombo(uid, sourceid),
+    CONSTRAINT fk_categoryoptioncombo_datavalue_2 FOREIGN KEY(attributeoptioncomboid, sourceid) REFERENCES categoryoptioncombo(uid, sourceid),
+    CONSTRAINT fk_source_datavalue FOREIGN KEY(sourceid) REFERENCES data_source(id)
 );
 
 CREATE OR REPLACE FUNCTION track_datavalue_changes()
@@ -489,7 +489,7 @@ BEGIN
 		 UPDATE datavalue SET change = 'update'
          WHERE dataelementid = NEW.dataelementid AND period =  NEW.period AND organisationunitid = NEW.organisationunitid AND
                 categoryoptioncomboid = NEW.categoryoptioncomboid AND attributeoptioncomboid = NEW.attributeoptioncomboid AND
-                source_id = NEW.source_id;
+                sourceid = NEW.sourceid;
 	END IF;
 
 	RETURN NEW;

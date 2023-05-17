@@ -43,7 +43,7 @@ def _set_data_source(ti, http_conn_id):
     connection = BaseHook.get_connection(http_conn_id)
     url = connection.host
     ti.xcom_push(key="get_hmis_data_source", value={
-                 'id': 'source_id', 'url': url})
+                 'id': 'sourceid', 'url': url})
 
 
 def _clean_tmp_dir(main_dir, sub_dir):

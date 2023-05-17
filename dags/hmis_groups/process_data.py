@@ -72,7 +72,7 @@ def process_data():
                 'followup': {'column': 'followup', 'type': 'bool'}
             },
             primary_keys=[
-                'dataelementid', 'period', 'organisationunitid', 'categoryoptioncomboid', 'attributeoptioncomboid', 'source_id'
+                'dataelementid', 'period', 'organisationunitid', 'categoryoptioncomboid', 'attributeoptioncomboid', 'sourceid'
             ]
         )
 

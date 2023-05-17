@@ -26,7 +26,7 @@ def process_data_element_groups_metadata():
                 'aggregationType': {'column': 'aggregationtype', 'type': 'str'}
             },
             primary_keys=[
-                'uid', 'source_id'
+                'uid', 'sourceid'
             ],
             output_sql_filename="dataElementGroups.sql",
             input_json_file="dags/tmp/json/dataElementGroups.json"

@@ -25,7 +25,7 @@ def process_categories_metadata():
                 'dataDimension': {'column': 'datadimension', 'type': 'bool'}
             },
             primary_keys=[
-                'uid', 'source_id'
+                'uid', 'sourceid'
             ],
             output_sql_filename="categories.sql",
             input_json_file="dags/tmp/json/categories.json"

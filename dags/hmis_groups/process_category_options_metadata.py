@@ -25,7 +25,7 @@ def process_category_options_metadata():
                 'shortName': {'column': 'shortname', 'type': 'str'}
             },
             primary_keys=[
-                'uid', 'source_id'
+                'uid', 'sourceid'
             ],
             output_sql_filename="categoryOptions.sql",
             input_json_file="dags/tmp/json/categoryOptions.json"
@@ -42,7 +42,7 @@ def process_category_options_metadata():
                 'id': {'column': 'category_id', 'type': 'str'},
             },
             primary_keys=[
-                'category_id', 'categoryoption_id', 'source_id'
+                'category_id', 'categoryoption_id', 'sourceid'
             ],
             output_sql_filename="category-CategoryOptions.sql",
             input_json_file="dags/tmp/json/categoryOptions.json"

@@ -41,7 +41,7 @@ def process_org_units_metadata():
                 }
             },
             primary_keys=[
-                'uid', 'source_id'
+                'uid', 'sourceid'
             ],
             output_sql_filename="organisationUnits.sql",
             input_json_file="dags/tmp/json/organisationUnits.json"

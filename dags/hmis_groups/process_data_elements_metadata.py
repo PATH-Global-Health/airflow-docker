@@ -36,7 +36,7 @@ def process_data_elements_metadata():
                 'href': {'column': 'url', 'type': 'str'}
             },
             primary_keys=[
-                'uid', 'source_id'
+                'uid', 'sourceid'
             ],
             output_sql_filename="dataElements.sql",
             input_json_file="dags/tmp/json/dataElements.json"
@@ -53,7 +53,7 @@ def process_data_elements_metadata():
                 'id': {'column': 'group_id', 'type': 'str'},
             },
             primary_keys=[
-                'dataelement_id', 'group_id', 'source_id'
+                'dataelement_id', 'group_id', 'sourceid'
             ],
             output_sql_filename="dataElement-dataElementGroup.sql",
             input_json_file="dags/tmp/json/dataElements.json"

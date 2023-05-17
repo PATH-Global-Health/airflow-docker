@@ -39,7 +39,7 @@ DATAELEMENT_METADATA_SQL_FILE = 'dags/tmp/ch_sql/dataElementMetadata.sql'
 def convert_dataelement_metadata(ti):
     pg_hook = PostgresHook(postgres_conn_id='postgres')
     pg_df = pg_hook.get_pandas_df("""
-       select de.uid, de.name,deg.uid,deg.name, de.source_id from dataelement as de 
+       select de.uid, de.name,deg.uid,deg.name, de.sourceid from dataelement as de 
         inner join dataelement_dataelementgroup as de_deg on de.uid = de_deg.dataelement_id 
         inner join dataelementgroup as deg on deg.uid = de_deg.group_id;""")
     data = {}
@@ -75,7 +75,7 @@ def convert_dataelement_metadata_in_json_2_sql(ti):
             cols.append('name')
             values.append("'{}'".format(de_value['name']))
 
-            cols.append('source_id')
+            cols.append('sourceid')
             values.append("'{}'".format(de_value['source']))
 
             cols.append('lastupdated')

@@ -24,7 +24,7 @@ def process_category_combos_metadata():
                 'name': {'column': 'name', 'type': 'str'}
             },
             primary_keys=[
-                'uid', 'source_id'
+                'uid', 'sourceid'
             ],
             output_sql_filename="categoryCombos.sql",
             input_json_file="dags/tmp/json/categoryCombos.json"
@@ -47,7 +47,7 @@ def process_category_combos_metadata():
                 'id': {'column': 'dataelementcategory_id', 'type': 'str'},
             },
             primary_keys=[
-                'categorycombo_id', 'dataelementcategory_id', 'source_id'
+                'categorycombo_id', 'dataelementcategory_id', 'sourceid'
             ],
             output_sql_filename="category-CategoryCombos.sql",
             input_json_file="dags/tmp/json/categoryCombos.json"

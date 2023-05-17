@@ -27,7 +27,7 @@ def process_orgunit_level_metadata():
                 'level': {'column': 'level', 'type': 'int'}
             },
             primary_keys=[
-                'uid', 'source_id'
+                'uid', 'sourceid'
             ],
             output_sql_filename="organisationUnitLevels.sql",
             input_json_file="dags/tmp/json/organisationUnitLevels.json"
